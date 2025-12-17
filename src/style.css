@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+:root {
+  --primary-rgb: 114, 16, 255;
+}
+
 @theme {
     /* 项目主题变量 */
     --color-primary: #7210FF;

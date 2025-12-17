@@ -114,17 +114,33 @@ export const useConfStore = defineStore("conf", () => {
     await saveIndex()
   }
 
-  const deleteTunnel = async (name: string): Promise<string> => {
-    const itemIndex = index.value.findIndex((i) => i.name === name)
-
-    if (itemIndex !== -1) {
-      index.value.splice(itemIndex, 1)
-      await saveIndex()
+  const deleteTunnel = async (name: string): Promise<ActionResponse> => {
+    if (enabledName.value === name) {
+      return {
+        success: false,
+        message: "该配置正在运行中，无法删除",
+      }
     }
 
-    const filePath = `${CONF_DIR}/${name}.json`
-    await writeTextFileToHome(filePath, "")
-    return name
+    try {
+      // 2. 内存状态更新
+      const itemIndex = index.value.findIndex((i) => i.name === name)
+      if (itemIndex !== -1) {
+        index.value.splice(itemIndex, 1)
+        await saveIndex()
+      }
+
+      // 3. 文件操作（沿用你原来的逻辑：写空字符串清空文件）
+      const filePath = `${CONF_DIR}/${name}.json`
+      await writeTextFileToHome(filePath, "")
+      return { success: true }
+    } catch (error) {
+      return {
+        success: false,
+        message:
+          error instanceof Error ? error.message : "删除过程中出现未知错误",
+      }
+    }
   }
 
   const addTunnel = async (

@@ -1,7 +1,7 @@
 {
   "$schema": "../../../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "puppet-trojan-client",
-  "version": "0.1.0",
+  "version": "../package.json",
   "identifier": "com.puppet4105.client",
   "build": {
     "beforeDevCommand": "npm run dev",

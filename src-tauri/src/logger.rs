@@ -12,6 +12,8 @@ pub fn init_logging(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let log_builder = Builder::new()
         .level(level_filter)
         .max_file_size(10 * 1024 * 1024)
+        // 使用本地时区
+        .timezone_strategy(tauri_plugin_log::TimezoneStrategy::UseLocal)
         // 只保留 1个日志文件
         .rotation_strategy(RotationStrategy::KeepOne)
         .targets([

@@ -15,6 +15,7 @@
     "dialog:allow-open",
     "fs:default",
     "log:default",
+    "core:app:allow-version",
     "fs:allow-read-text-file-lines",
     {
       "identifier": "fs:allow-exists",

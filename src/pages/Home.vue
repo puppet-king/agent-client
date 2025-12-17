@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue"
 import { useRouter } from "vue-router"
-import { Plus, MoreVertical, FileText, PenTool } from "lucide-vue-next"
+import { Plus, MoreVertical, FileText, PenTool, Inbox } from "lucide-vue-next"
 import UISwitch from "@/components/UISwitch.vue"
 import NavBar from "@/components/NavBar.vue"
 import ButtonWrapper from "@/components/ButtonWrapper.vue"
@@ -129,7 +129,7 @@ const onConnect = async (name: string) => {
 
 <template>
   <!-- App Bar -->
-  <NavBar title="Puppet Tunnel">
+  <NavBar title="我的">
     <template #right>
       <ButtonWrapper @click="router.push('/settings')">
         <MoreVertical :size="24" class="text-slate-600" />
@@ -138,32 +138,86 @@ const onConnect = async (name: string) => {
   </NavBar>
 
   <!-- Content -->
-  <main class="flex-1 overflow-y-auto flex flex-col pt-2">
-    <div v-if="index.length > 0" class="py-2">
+  <main class="flex-1 overflow-y-auto no-scrollbar p-4">
+    <div v-if="index.length > 0" class="space-y-3">
       <div
         v-for="item in index"
         :key="item.name"
-        class="bg-dark-2 px-4 py-4 flex items-center justify-between hover:bg-slate-800 transition-colors border-b border-slate-100 last:border-0 cursor-pointer"
+        class="group relative bg-dark-2 p-5 flex items-center justify-between rounded-2xl border border-white/5 hover:border-primary/30 hover:bg-dark-3 transition-all duration-300 cursor-pointer shadow-sm active:scale-[0.98]"
         @click="handleTunnelClick(item.name)"
       >
-        <span class="text-xl font-normal">{{ item.name }}</span>
-        <div @click.stop>
+        <!-- 运行状态指示器 (仅选中时显示) -->
+        <div
+          v-if="item.name === enabledName"
+          class="absolute left-0 top-1/4 bottom-1/4 w-1 bg-primary rounded-r-full shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]"
+        ></div>
+
+        <div class="flex flex-col gap-1 pl-2">
+          <span
+            class="text-base font-semibold tracking-tight text-slate-100 group-hover:text-primary transition-colors"
+          >
+            {{ item.name }}
+          </span>
+          <!-- 辅助信息：显示配置预览，增加专业感 -->
+          <span
+            class="text-[10px] text-slate-500 font-mono uppercase tracking-wider"
+          >
+            Trojan-Go • Client Mode
+          </span>
+        </div>
+
+        <div class="flex items-center gap-4" @click.stop>
+          <!-- 状态小字提示 -->
+          <span
+            v-if="item.name === enabledName"
+            class="text-[10px] text-primary font-bold animate-pulse"
+            >RUNNING</span
+          >
+
           <UISwitch
             :checked="item.name === enabledName"
-            size="large"
+            size="medium"
             @update:checked="
               onConnect(item.name === enabledName ? '' : item.name)
             "
           />
         </div>
       </div>
+    </div>
 
+    <!-- 空状态优化 -->
+    <div
+      v-else
+      class="flex flex-col items-center justify-center py-20 px-6 text-center"
+    >
+      <!-- 图标装饰：使用大圆角矩形容器 -->
       <div
-        v-if="index.length === 0"
-        class="flex flex-col items-center justify-center h-64"
+        class="w-20 h-20 bg-dark-2 rounded-[24px] flex items-center justify-center mb-6 border border-white/5 shadow-inner"
       >
-        <p>没有数据 ~</p>
+        <Inbox :size="40" class="text-slate-600" />
       </div>
+
+      <!-- 文案部分 -->
+      <div class="space-y-2 mb-8">
+        <h3 class="text-slate-200 font-bold text-lg tracking-tight">
+          暂无配置文件
+        </h3>
+        <p class="text-slate-500 text-sm max-w-[200px] mx-auto leading-relaxed">
+          还没有任何节点信息，快去创建一个属于你的配置吧。
+        </p>
+      </div>
+
+      <!-- 动作按钮：跳转到创建页 -->
+      <button
+        class="group flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-white rounded-2xl transition-all duration-300 active:scale-95 shadow-lg shadow-primary/20"
+        @click="router.push('/create')"
+      >
+        <Plus
+          :size="20"
+          class="group-hover:rotate-90 transition-transform duration-300"
+        />
+        <span class="font-bold text-sm tracking-wide">立即创建配置</span>
+      </button>
     </div>
   </main>
 
@@ -184,7 +238,7 @@ const onConnect = async (name: string) => {
       @click="uploadConf"
     >
       <FileText :size="24" class="text-slate-500" />
-      <span class="text-lg font-medium">导入配置或压缩包</span>
+      <span class="text-lg font-medium">导入配置</span>
     </button>
 
     <button

@@ -4,11 +4,11 @@ import { Trash2, Pencil, Monitor, ShieldCheck } from "lucide-vue-next"
 import { useConfStore } from "@/stores/userConf"
 import { onMounted, ref, computed } from "vue"
 import type { TunnelConfig } from "@/typings/config.ts"
-// import UISwitch from "@/components/UISwitch.vue"
-// import { storeToRefs } from "pinia"
 import NavBar from "@/components/NavBar.vue"
 import ButtonWrapper from "@/components/ButtonWrapper.vue"
 import UIDisclosure from "@/components/Disclosure.vue"
+import UIDialog from "@/components/UIDialog.vue"
+import { toast } from "@/composables/useToast"
 
 defineOptions({
   name: "ConfigDetail",
@@ -17,7 +17,7 @@ defineOptions({
 const router = useRouter()
 const route = useRoute()
 const conf = useConfStore()
-// const { enabledName } = storeToRefs(conf)
+const isDialogOpen = ref(false)
 
 const name = ref("")
 const tunnel = ref<TunnelConfig | null>(null)
@@ -41,21 +41,20 @@ const localAddr = computed(() => {
   return tunnel.value?.local_addr + ":" + tunnel.value?.local_port
 })
 
-const handleDelete = () => {
-  if (confirm("Are you sure you want to delete this tunnel?")) {
-    conf.deleteTunnel(name.value)
-    router.push("/")
+const confirmDelete = async () => {
+  const data = await conf.deleteTunnel(name.value)
+  if (!data.success) {
+    toast.error(data.message ?? "删除失败", 3000)
+    return
   }
+
+  isDialogOpen.value = false
+  void router.push("/")
 }
 
-// const onConnect = async () => {
-//   if (enabledName.value === name.value) {
-//     return
-//   }
-//
-//   console.log("onConnect")
-//   enabledName.value = name.value
-// }
+const handleDelete = () => {
+  isDialogOpen.value = true
+}
 </script>
 
 <template>
@@ -101,7 +100,7 @@ const handleDelete = () => {
     </NavBar>
 
     <main class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4 pb-12">
-      <!-- 1. 核心状态卡片 -->
+      <!-- 核心状态卡片 -->
       <div
         class="bg-gradient-to-br from-dark-2 to-dark-3 p-6 rounded-2xl border border-dark-3 shadow-xl relative overflow-hidden"
       >
@@ -122,7 +121,12 @@ const handleDelete = () => {
         </div>
         <p class="text-slate-400 font-mono text-sm flex items-center gap-2">
           <span
-            class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"
+            class="w-2 h-2 rounded-full"
+            :class="
+              conf.enabledName === name
+                ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]'
+                : 'bg-gray-500'
+            "
           ></span>
           {{ tunnel.remote_addr }}:{{ tunnel.remote_port }}
         </p>
@@ -140,7 +144,7 @@ const handleDelete = () => {
         </div>
         <div class="bg-dark-2 p-4 rounded-xl border border-dark-3">
           <div class="text-xs text-slate-500 mb-1 flex items-center gap-1.5">
-            <ShieldCheck :size="12" /> 安全协议
+            <ShieldCheck :size="12" /> 协议
           </div>
           <div class="font-mono text-primary text-sm">Trojan-Go</div>
         </div>
@@ -298,4 +302,25 @@ const handleDelete = () => {
       </div>
     </main>
   </template>
+
+  <UIDialog :show="isDialogOpen" title="确认操作" @close="isDialogOpen = false">
+    <p class="text-sm text-slate-400">
+      你确定要删除这个配置文件吗？此操作无法撤销。
+    </p>
+
+    <template #footer>
+      <button
+        class="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white cursor-pointer"
+        @click="isDialogOpen = false"
+      >
+        取消
+      </button>
+      <button
+        class="inline-flex items-center justify-center px-4 py-2 text-sm font-bold bg-red-600 hover:bg-red-700 text-white rounded-xl cursor-pointer leading-none"
+        @click="confirmDelete"
+      >
+        确定删除
+      </button>
+    </template>
+  </UIDialog>
 </template>

@@ -43,6 +43,13 @@ export default defineConfig({
   // 解决 crypto 问题的配置
   define: {
     global: "globalThis",
+    "import.meta.env.VITE_BUILD_PLATFORM": JSON.stringify(
+      process.platform === "win32"
+        ? "Windows"
+        : process.platform === "darwin"
+          ? "macOS"
+          : "Linux",
+    ),
   },
   resolve: {
     alias: {

@@ -51,10 +51,7 @@ const getSizeClasses = () => {
   <Switch
     :model-value="checked"
     :disabled="disabled"
-    :class="[
-      checked ? 'bg-primary' : 'bg-[#1B1D21]',
-      getSizeClasses().container,
-    ]"
+    :class="[checked ? 'bg-primary' : 'bg-dark-1', getSizeClasses().container]"
     class="relative inline-flex shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75"
     @update:model-value="handleChange"
   >
