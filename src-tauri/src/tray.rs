@@ -26,10 +26,10 @@ pub fn create_tray<R: Runtime>(app: &App<R>) -> tauri::Result<()> {
                     }
                 }
                 "quit" => {
+                    log::info!("quit");
                     // 调用 trojan 模块的清理逻辑
                     let state = app.state::<TrojanState>();
                     let _ = stop_trojan_internal(&state);
-                    // println!("quit menu item was clicked");
                     for window in app.webview_windows().values() {
                         let _ = window.close();
                     }

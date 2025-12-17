@@ -36,9 +36,31 @@ export default defineConfig({
     target:
       process.env.TAURI_ENV_PLATFORM == "windows" ? "chrome105" : "safari13",
     // don't minify for debug builds
-    minify: !process.env.TAURI_ENV_DEBUG ? "esbuild" : false,
+    minify: !process.env.TAURI_ENV_DEBUG ? "terser" : false,
     // produce sourcemaps for debug builds
     sourcemap: !!process.env.TAURI_ENV_DEBUG,
+    terserOptions: !process.env.TAURI_ENV_DEBUG
+      ? {
+          compress: {
+            pure_funcs: [
+              "console.log",
+              "console.group",
+              "console.groupEnd",
+              "console.debug",
+            ],
+            drop_debugger: true, // 删除 debugger
+          },
+          format: {
+            comments: false,
+          },
+          mangle: true, // 混淆变量
+        }
+      : {
+          compress: {
+            // 测试环境不删除任何 console
+            drop_debugger: false,
+          },
+        },
   },
   // 解决 crypto 问题的配置
   define: {

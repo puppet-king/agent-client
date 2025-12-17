@@ -8,7 +8,9 @@
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "tauri:dev": "tauri dev"
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "tauri:build-nobundle": "tauri build -- --no-bundle"
   },
   "dependencies": {
     "@headlessui/vue": "^1.7.23",

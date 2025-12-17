@@ -40,7 +40,7 @@ pub fn stop_trojan_internal(state: &TrojanState) -> Result<(), String> {
                 .inspect(|_| log::info!("proxy close success"))
                 // 错误时执行：打印 error 日志 + 格式化错误信息
                 .map_err(|e| {
-                    log::error!("proxy close faild: {}", e);
+                    log::error!("proxy close failed: {}", e);
                     format!("关闭代理失败: {}", e)
                 })?;
         } else {
@@ -50,7 +50,10 @@ pub fn stop_trojan_internal(state: &TrojanState) -> Result<(), String> {
 
     let mut lock = state.child.lock().unwrap();
     if let Some(child) = lock.take() {
-        child.kill().map_err(|e| format!("无法杀掉进程: {}", e))?;
+        child.kill().map_err(|e| {
+            log::error!("无法杀掉进程: {}", e);
+            format!("无法杀掉进程: {}", e)
+        })?;
     }
 
     
