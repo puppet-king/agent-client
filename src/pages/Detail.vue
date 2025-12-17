@@ -115,7 +115,7 @@ const handleDelete = () => {
             {{ name }}
           </h1>
           <span
-            class="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider bg-primary/50 border border-primary/30 rounded"
+            class="px-2 py-0.5 text-[10px] font-bold tracking-wider bg-primary/50 border border-primary/30 rounded"
           >
             客户端
           </span>
@@ -171,7 +171,7 @@ const handleDelete = () => {
                 :class="
                   tunnel.ssl?.enabled ? 'text-green-500' : 'text-slate-600'
                 "
-                class="text-[10px] uppercase font-black"
+                class="text-xs uppercase font-black"
               >
                 {{ tunnel.ssl?.enabled ? "启用" : "禁用" }}
               </span>

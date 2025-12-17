@@ -150,6 +150,7 @@ const onConnect = async (name: string) => {
         <div @click.stop>
           <UISwitch
             :checked="item.name === enabledName"
+            size="large"
             @update:checked="
               onConnect(item.name === enabledName ? '' : item.name)
             "

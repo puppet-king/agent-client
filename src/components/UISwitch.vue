@@ -32,16 +32,16 @@ const getSizeClasses = () => {
       }
     case "large":
       return {
-        container: "h-[48px] w-[88px]",
-        thumb: "h-[44px] w-[44px]",
-        translate: props.checked ? "translate-x-11" : "translate-x-0",
+        container: "h-[38px] w-[74px]",
+        thumb: "h-[34px] w-[34px]",
+        translate: props.checked ? "translate-x-9" : "translate-x-0",
       }
     case "medium":
     default:
       return {
-        container: "h-[38px] w-[74px]",
-        thumb: "h-[34px] w-[34px]",
-        translate: props.checked ? "translate-x-9" : "translate-x-0",
+        container: "h-[34px] w-[64px]",
+        thumb: "h-[30px] w-[30px]",
+        translate: props.checked ? "translate-x-8" : "translate-x-0",
       }
   }
 }
