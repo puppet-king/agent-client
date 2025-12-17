@@ -1,0 +1,72 @@
+{
+  "$schema": "../../../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "puppet-trojan-client",
+  "version": "0.1.0",
+  "identifier": "com.puppet4105.client",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../dist",
+    "removeUnusedCommands": true
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "puppet4105",
+        "backgroundColor": "#181A20",
+        "title": "puppet-trojan-client",
+        "fullscreen": false,
+        "width": 422,
+        "height": 750,
+        "resizable": true,
+        "contentProtected": true,
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    // https://v2.tauri.app/plugin/updater/ 启用此设置会true指示 Tauri 的应用打包器创建更新程序工件
+    "createUpdaterArtifacts": true,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "externalBin": [
+      // TODO: 添加trojan-go二进制文件
+      "binaries/trojan-go"
+    ],
+    "resources": {
+      "resources/*": "resources/"
+    },
+    "windows": {
+      "webviewInstallMode": {
+        "silent": true,
+        "type": "downloadBootstrapper" // 静默安装
+      },
+      "wix": {
+        "upgradeCode": "58185001-c8b5-50dc-8b73-82659663df0b",
+        "language": "zh-CN" // 中文  1033 英文
+      },
+    }
+  },
+  "plugins": {
+    "updater": {
+      "windows": {
+        // "passive"会弹出一个带有进度条的小窗口
+        "installMode": "passive"
+      },
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE2MjY2RjcxMUNFNjFBMzQKUldRMEd1WWNjVzhtRm1FWjIxZkk4M1lzS1pqSE1KZWFGWks5ek1UR2RyUTJ0NjB3YjFNLzNKTEEK",
+      "endpoints": [
+        "https://github.com/user/repo/releases/latest/download/latest.json"
+      ]
+    }
+  }
+}

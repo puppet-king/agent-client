@@ -1,0 +1,52 @@
+[package]
+name = "app"
+version = "0.1.0"
+description = "A Tauri App"
+authors = ["puppet4105"]
+license = ""
+repository = ""
+edition = "2021"
+rust-version = "1.77.2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.5.3", features = [] }
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+sysproxy = "0.3"
+serde_json = "1.0"
+tauri = { version = "2.9.5", features = [
+                               "config-json5",
+                               "tray-icon",    # 后台托盘
+                               # "rustls-tls",  # 安全 HTTPS
+                             ] }
+tauri-plugin-log = "2"
+tauri-plugin-devtools = "2.0.0"
+tauri-plugin-store = "2"
+tauri-plugin-stronghold = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-shell = "2"
+regex = "1.12.2"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-autostart = "2"
+tauri-plugin-single-instance = "2"
+tauri-plugin-updater = "2"
+
+[profile.dev]
+incremental = true # 增量编译，只编译修改过的部分，加快开发编译速度。
+
+[profile.release]
+codegen-units = 1 # 允许 LLVM 更好地进行优化（降低代码单元数，提高全局优化效果）。
+lto = true # 启用链接时优化（Link Time Optimization），可以进一步优化性能和减小二进制体积。
+opt-level = "s" # 优先优化二进制体积（减小文件大小），如果希望追求速度可以改为 3。
+panic = "abort" # 禁用 panic 处理程序，提高性能（遇到 panic 程序直接终止，不展开栈）。
+strip = true # 去掉调试符号，确保生成的二进制文件更小。

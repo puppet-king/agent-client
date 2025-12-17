@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@theme {
+    /* 项目主题变量 */
+    --color-primary: #7210FF;
+    --color-primary-100: #F1E7FF;
+    --color-primary-200: #C79FFF;
+    --color-primary-300: #AA70FF;
+    --color-primary-400: #8E40FF;
+
+
+    --color-secondary-100: #FFFBE6;
+    --color-secondary-200: #FFED99;
+    --color-secondary-300: #FFE566;
+    --color-secondary-400: #FFDC33;
+    --color-secondary-500: #FFD300;
+
+
+    --color-dark-1: #181A20;
+    --color-dark-2: #1F222A;
+    --color-dark-3: #35383F;
+
+
+    --color-greyscale-900: #212121;
+    --color-greyscale-800: #424242;
+    --color-greyscale-700: #616161;
+    --color-greyscale-600: #757575;
+    --color-greyscale-500: #9E9E9E;
+    --color-greyscale-400: #BDBDBD;
+    --color-greyscale-300: #E0E0E0;
+    --color-greyscale-200: #EEEEEE;
+    --color-greyscale-100: #F5F5F5;
+    --color-greyscale-50: #FAFAFA;
+}
+
+
+@layer base {
+    .container {
+        @apply relative flex h-screen w-screen box-border flex-col  bg-dark-1 text-white overflow-hidden;
+    }
+}
+
+.gradient-purple {
+    background: linear-gradient(305deg, #7210FF 0%, #9D59FF 99%);
+}
+
+.focus-within\:gradient-purple:focus-within {
+  background: linear-gradient(305deg, #7210FF 0%, #9D59FF 99%);
+}
+
+.gradient-yellow {
+    background: linear-gradient(305deg, #FACC15 0%, #FFE580 99%);
+}
+
+.gradient-blue {
+    background: linear-gradient(305deg, #335EF7 0%, #5F82FF 99%);
+}
+
+.gradient-green {
+    background: linear-gradient(305deg, #22BB9C 0%, #35DEBC 99%);
+}
+
+.gradient-orange {
+    background: linear-gradient(305deg, #FB9400 0%, #FFAB38 99%);
+}
+
+.gradient-red {
+    background: linear-gradient(305deg, #FF4D67 0%, #FF8A9B 99%);
+}

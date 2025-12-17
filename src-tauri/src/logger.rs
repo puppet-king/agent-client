@@ -1,0 +1,49 @@
+use log::LevelFilter;
+use tauri::AppHandle;
+use tauri_plugin_log::{Builder, RotationStrategy, Target, TargetKind};
+
+pub fn init_logging(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+    #[cfg(debug_assertions)]
+    let level_filter = log::LevelFilter::Debug;
+
+    #[cfg(not(debug_assertions))]
+    let level_filter = log::LevelFilter::Info;
+
+    let log_builder = Builder::new()
+        .level(level_filter)
+        .max_file_size(10 * 1024 * 1024)
+        // 只保留 1个日志文件
+        .rotation_strategy(RotationStrategy::KeepOne)
+        .targets([
+            Target::new(TargetKind::Stdout),
+            // 文件路径示例 C:\Users\qqq43\AppData\Local\com.tauri.dev\logs
+            Target::new(TargetKind::LogDir {
+                file_name: Some("app".to_string()),
+            }),
+        ])
+        .filter(|metadata| {
+            metadata.target() != "tauri::manager"
+                && metadata.target() != "wry::webview2"
+                && metadata.target() != "tracing::span"
+                && metadata.target() != "tauri::app"
+        });
+
+    #[cfg(debug_assertions)]
+    {
+        let (tauri_plugin_log, _max_level, logger) = log_builder.split(app)?;
+        let mut devtools_builder = tauri_plugin_devtools::Builder::default();
+        devtools_builder.attach_logger(logger);
+        app.plugin(devtools_builder.init())?;
+        app.plugin(tauri_plugin_log)?;
+    }
+
+    #[cfg(not(debug_assertions))]
+    //     #[cfg(debug_assertions)]
+    {
+        let (tauri_plugin_log, max_level, logger) = log_builder.split(app)?;
+        let _ = tauri_plugin_log::attach_logger(max_level, logger);
+        app.plugin(tauri_plugin_log)?;
+    }
+
+    Ok(())
+}
