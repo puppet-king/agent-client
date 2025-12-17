@@ -67,3 +67,14 @@
 .gradient-red {
     background: linear-gradient(305deg, #FF4D67 0%, #FF8A9B 99%);
 }
+
+
+/* 全局通配符，作用于所有元素 */
+*::-webkit-scrollbar {
+  width: 0;       /* 宽度设为 0 */
+  background: transparent; /* 背景透明 */
+}
+
+*::-webkit-scrollbar-thumb {
+  background: transparent; /* 滑块也透明 */
+}

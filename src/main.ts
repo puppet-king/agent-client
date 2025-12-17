@@ -19,4 +19,4 @@ forwardConsole("info", info)
 forwardConsole("warn", warn)
 forwardConsole("error", error)
 
-createApp(App).use(router).use(pinia).mount("#app")
+createApp(App).use(pinia).use(router).mount("#app")

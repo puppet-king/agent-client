@@ -36,11 +36,30 @@ pub fn run() {
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_shell::init())
         .on_window_event(|window, event| {
-            if let WindowEvent::CloseRequested { api, .. } = event {
-                // 阻止窗口真正关闭/销毁
-                api.prevent_close();
-                // 隐藏窗口到后台
-                let _ = window.hide();
+            log::info!("Window event: {:?}", event);
+
+            match event {
+                // 处理窗口关闭请求：隐藏窗口到后台，阻止真正关闭
+                WindowEvent::CloseRequested { api, .. } => {
+                    log::info!("用户请求关闭窗口，隐藏到后台");
+                    api.prevent_close(); // 阻止窗口关闭
+                    let _ = window.hide(); // 隐藏窗口（忽略可能的错误，或按需处理）
+                }
+        
+                // 处理窗口焦点事件：解决黑屏唤醒卡死问题
+                WindowEvent::Focused(focused) => {
+                    if *focused {
+                        log::info!("窗口获得焦点，唤醒 Webview 渲染");
+                        // 执行 JS 激活渲染循环
+                        // let _ = window.run_javascript("window.requestAnimationFrame(() => { console.log('resume'); })");
+                    }
+                }
+        
+                // 其他未匹配的事件：忽略（或按需打印 debug 日志）
+                _ => {
+                    // 仅在 debug 模式打印次要事件，避免日志刷屏
+                    // log::debug!("未处理的窗口事件: {:?}", event);
+                }
             }
         })
         // 使用 argon2 密码哈希函数初始化

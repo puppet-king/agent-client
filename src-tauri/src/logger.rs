@@ -4,10 +4,10 @@ use tauri_plugin_log::{Builder, RotationStrategy, Target, TargetKind};
 
 pub fn init_logging(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(debug_assertions)]
-    let level_filter = log::LevelFilter::Debug;
+    let level_filter = LevelFilter::Debug;
 
     #[cfg(not(debug_assertions))]
-    let level_filter = log::LevelFilter::Info;
+    let level_filter = LevelFilter::Info;
 
     let log_builder = Builder::new()
         .level(level_filter)

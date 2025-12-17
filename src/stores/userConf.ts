@@ -10,6 +10,7 @@ import {
   stopTrojan,
   writeTextFileToHome,
 } from "@/utils/rustUtils"
+import type { ActionResponse } from "@/typings/api"
 
 interface TunnelIndexItem {
   name: string // 唯一性
@@ -20,11 +21,30 @@ export const useConfStore = defineStore("conf", () => {
   const index = ref<TunnelIndexItem[]>([])
   const enabledName = ref<string>("")
 
+  const isInitialized = ref(false)
+  const initPromise = ref<Promise<void> | null>(null)
+
   const initConfig = async () => {
-    console.log("initConfig")
-    await initHomeDir()
-    await loadIndex()
-    await loadState()
+    // 1. 如果已经初始化完成，直接返回
+    if (isInitialized.value) return
+
+    // 2. 如果初始化正在进行中，返回现有的 Promise，避免重复触发文件读取
+    if (initPromise.value) return initPromise.value
+
+    // 3. 开始初始化并存入 Promise
+    initPromise.value = (async () => {
+      try {
+        console.log("🚀 [Store] 执行全局初始化...")
+        await initHomeDir()
+        await loadIndex()
+        await loadState()
+        isInitialized.value = true
+      } finally {
+        initPromise.value = null // 结束后清除，方便后续手动重刷
+      }
+    })()
+
+    return initPromise.value
   }
 
   const loadState = async () => {
@@ -57,16 +77,16 @@ export const useConfStore = defineStore("conf", () => {
   }
 
   const loadTunnel = async (name: string): Promise<TunnelConfig | null> => {
-    console.log("loadTunnel1", index.value, name)
     const item = index.value.find((i) => i.name === name)
+    console.log("loadTunnel", name, "没有找到")
+    console.log("loadTunnel", index.value)
     if (!item) return null
-
-    console.log("loadTunnel2", item.path)
-
+    console.debug("loadTunnel path", item.path)
     try {
       const data = await readTextFileToHome(item.path)
       return JSON.parse(data)
-    } catch {
+    } catch (e) {
+      console.error("loadTunnel", e)
       return null
     }
   }
@@ -102,7 +122,7 @@ export const useConfStore = defineStore("conf", () => {
       await saveIndex()
     }
 
-    const filePath = `${CONF_DIR}/${name}.conf`
+    const filePath = `${CONF_DIR}/${name}.json`
     await writeTextFileToHome(filePath, "")
     return name
   }
@@ -111,13 +131,24 @@ export const useConfStore = defineStore("conf", () => {
     name: string,
     config: TunnelConfig,
     isSafe: boolean = false,
-  ) => {
+  ): Promise<ActionResponse> => {
     const existing = index.value.find((i) => i.name === name)
     if (existing) {
-      throw new Error(`Tunnel with name ${name} already exists`)
+      return {
+        success: false,
+        message: `配置文件： ${name} 已存在，请更换文件名重试`,
+      }
     }
 
-    await saveTunnel(name, config, isSafe)
+    try {
+      await saveTunnel(name, config, isSafe)
+      return { success: true }
+    } catch (e) {
+      return {
+        success: false,
+        message: e instanceof Error ? e.message : "Failed to save tunnel",
+      }
+    }
   }
 
   const updateTunnel = async (key: string, config: TunnelConfig) => {
@@ -128,6 +159,8 @@ export const useConfStore = defineStore("conf", () => {
   return {
     index,
     enabledName,
+    isInitialized,
+    initPromise,
     initConfig,
     addTunnel,
     loadTunnel,

@@ -35,7 +35,6 @@ onMounted(async () => {
   try {
     // const appDataDirPath = await appDataDir()
     // console.log("appDataDirPath", appDataDirPath)
-    await conf.initConfig()
     await listenTrojanLog((msg) => {
       const log = parseTrojanGoLog(msg)
       if (log) {
@@ -48,6 +47,7 @@ onMounted(async () => {
             const conflictMatch = message.match(portConflictRegex)
             if (conflictMatch && conflictMatch[1] && conflictMatch[2]) {
               toast.error(` ${conflictMatch[2]}  端口被占用`)
+              enabledName.value = ""
               console.error(
                 `[trojan-go] ${conflictMatch[1].toUpperCase()} port ${conflictMatch[2]} conflict`,
               )
@@ -63,8 +63,9 @@ onMounted(async () => {
   }
 })
 
-const handleTunnelClick = (key: string) => {
-  router.push(`/detail/${key}`)
+const handleTunnelClick = (name: string) => {
+  console.debug("jumPath", `/detail/${name}`)
+  router.push(`/detail/${name}`)
 }
 
 const handleCreateManual = () => {
@@ -85,7 +86,12 @@ const uploadConf = async () => {
     const { valid, errors } = validateTunnelConfig(data.content)
     if (valid) {
       const content = await replaceRouterConfig(data.content as TunnelConfig)
-      await conf.addTunnel(name, content, true)
+      const result = await conf.addTunnel(name, content, true)
+      if (!result.success) {
+        toast.error(result.message ?? "添加失败", 3000)
+        return
+      }
+
       toast.success("添加成功")
       isMenuOpen.value = false
     } else {
