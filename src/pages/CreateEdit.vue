@@ -96,12 +96,15 @@ const handleSave = async () => {
   }
 
   try {
-    // 调用 Store 的方法保存到 Rust 后端
-    const result = await confStore.addTunnel(configName.value, { ...form })
-
+    const result = isEdit.value
+      ? await confStore.updateTunnel(configName.value, { ...form })
+      : await confStore.addTunnel(configName.value, { ...form })
     if (result.success) {
-      // 保存成功后跳转回详情或首页
-      void router.push(`/`)
+      if (isEdit.value) {
+        router.back()
+      } else {
+        void router.push(`/`)
+      }
     } else {
       toast.error(result.message || "保存失败")
     }
@@ -140,7 +143,7 @@ const handleSave = async () => {
           <input
             v-model="configName"
             type="text"
-            placeholder="例如: clinet"
+            placeholder="client"
             class="w-full bg-dark-3 border border-dark-3 focus:border-primary/50 rounded-xl px-4 py-3 text-sm transition-all outline-none"
             :class="isEdit ? 'disabled:cursor-not-allowed ' : ''"
             :disabled="isEdit"
@@ -153,6 +156,7 @@ const handleSave = async () => {
             <input
               v-model="form.remote_addr"
               type="text"
+              placeholder="公网 IPv4 地址"
               class="w-full bg-dark-3 border border-dark-3 rounded-xl px-4 py-3 text-sm font-mono outline-none focus:border-primary/50"
             />
           </div>
@@ -161,6 +165,7 @@ const handleSave = async () => {
             <input
               v-model.number="form.remote_port"
               type="number"
+              placeholder="443"
               class="w-full bg-dark-3 border border-dark-3 rounded-xl px-4 py-3 text-sm font-mono outline-none focus:border-primary/50"
             />
           </div>
@@ -172,6 +177,7 @@ const handleSave = async () => {
             <input
               v-model="form.password[0]"
               :type="showPassword ? 'text' : 'password'"
+              placeholder=""
               class="flex-1 bg-dark-3 border border-dark-3 rounded-xl px-4 py-3 text-sm font-mono outline-none focus:border-primary/50"
             />
 
@@ -201,6 +207,7 @@ const handleSave = async () => {
             <input
               v-model="form.local_addr"
               type="text"
+              placeholder="127.0.0.1"
               class="w-full bg-dark-3 border border-dark-3 rounded-xl px-4 py-3 text-sm font-mono outline-none"
             />
           </div>
@@ -209,6 +216,7 @@ const handleSave = async () => {
             <input
               v-model.number="form.local_port"
               type="number"
+              placeholder="5001"
               class="w-full bg-dark-3 border border-dark-3 rounded-xl px-4 py-3 text-sm font-mono outline-none"
             />
           </div>

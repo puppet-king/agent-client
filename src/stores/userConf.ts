@@ -110,7 +110,6 @@ export const useConfStore = defineStore("conf", () => {
       index.value.push({ name: name, path: filePath })
     }
 
-    console.log("saveTunnel", index.value)
     await saveIndex()
   }
 
@@ -123,14 +122,14 @@ export const useConfStore = defineStore("conf", () => {
     }
 
     try {
-      // 2. 内存状态更新
+      // 内存状态更新
       const itemIndex = index.value.findIndex((i) => i.name === name)
       if (itemIndex !== -1) {
         index.value.splice(itemIndex, 1)
         await saveIndex()
       }
 
-      // 3. 文件操作（沿用你原来的逻辑：写空字符串清空文件）
+      // 文件操作（沿用你原来的逻辑：写空字符串清空文件）
       const filePath = `${CONF_DIR}/${name}.json`
       await writeTextFileToHome(filePath, "")
       return { success: true }
@@ -167,9 +166,20 @@ export const useConfStore = defineStore("conf", () => {
     }
   }
 
-  const updateTunnel = async (key: string, config: TunnelConfig) => {
-    await deleteTunnel(key)
-    await saveTunnel(key, config)
+  const updateTunnel = async (
+    name: string,
+    config: TunnelConfig,
+  ): Promise<ActionResponse> => {
+    try {
+      await deleteTunnel(name)
+      await saveTunnel(name, config)
+      return { success: true }
+    } catch (e) {
+      return {
+        success: false,
+        message: e instanceof Error ? e.message : "Failed to save tunnel",
+      }
+    }
   }
 
   return {
