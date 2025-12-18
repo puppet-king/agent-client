@@ -91,6 +91,7 @@ pub fn run() {
             trojan::run_trojan,
             trojan::stop_trojan,
             trojan::get_trojan_status,
+            logger::flush_logs,
         ]);
 
     builder

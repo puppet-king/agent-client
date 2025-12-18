@@ -19,6 +19,7 @@ pub fn init_logging(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         .targets([
             Target::new(TargetKind::Stdout),
             // 文件路径示例 C:\Users\qqq43\AppData\Local\com.tauri.dev\logs
+            // windows 应用 C:\Users\qqq43\AppData\Local\com.puppet4105.client\logs
             Target::new(TargetKind::LogDir {
                 file_name: Some("app".to_string()),
             }),
@@ -48,4 +49,10 @@ pub fn init_logging(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
+}
+
+#[tauri::command]
+pub fn flush_logs() {
+    log::debug!("前端触发了日志刷盘");
+    log::logger().flush();
 }

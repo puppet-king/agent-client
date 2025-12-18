@@ -8,3 +8,5 @@ export const CONFIG_PATH = ".agent1215-client/config.json"
 export const INDEX_FILE = ".agent1215-client/index.json"
 
 export const USER_DIR = ".agent1215-client"
+
+export const LOG_FILE = "app.log"
