@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue"
+import { onMounted, onUnmounted, ref } from "vue"
 import { useRouter } from "vue-router"
 import { Plus, MoreVertical, FileText, PenTool, Inbox } from "lucide-vue-next"
 import UISwitch from "@/components/UISwitch.vue"
@@ -29,17 +29,18 @@ const router = useRouter()
 const conf = useConfStore()
 const { index, enabledName } = storeToRefs(conf)
 const isMenuOpen = ref(false)
-console.log("index", index.value)
+let unlisten: (() => void) | null = null
 
 onMounted(async () => {
   try {
-    // const appDataDirPath = await appDataDir()
-    // console.log("appDataDirPath", appDataDirPath)
-    await listenTrojanLog((msg) => {
+    if (unlisten) {
+      unlisten()
+      unlisten = null
+    }
+
+    const unlistenFn = await listenTrojanLog((msg) => {
       const log = parseTrojanGoLog(msg)
       if (log) {
-        // console.log(log)
-
         if (log.level === "FATAL") {
           const message = log.message ?? ""
           if (log.message) {
@@ -50,9 +51,9 @@ onMounted(async () => {
             if (conflictMatch && conflictMatch[1] && conflictMatch[2]) {
               toast.error(` ${conflictMatch[2]}  端口被占用`)
               enabledName.value = ""
-              console.error(
-                `[trojan-go] ${conflictMatch[1].toUpperCase()} port ${conflictMatch[2]} conflict`,
-              )
+              // console.error(
+              //   `[trojan-go] ${conflictMatch[1].toUpperCase()} port ${conflictMatch[2]} conflict`,
+              // )
             } else {
               toast.error(message)
             }
@@ -60,6 +61,7 @@ onMounted(async () => {
         }
       }
     })
+    unlisten = unlistenFn
   } catch (err) {
     console.error(err)
   }
@@ -74,6 +76,14 @@ const handleCreateManual = () => {
   isMenuOpen.value = false
   router.push("/create")
 }
+
+// 3. 关键：组件卸载时取消监听
+onUnmounted(() => {
+  if (unlisten) {
+    unlisten()
+    unlisten = null
+  }
+})
 
 const uploadConf = async () => {
   try {

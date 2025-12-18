@@ -128,10 +128,13 @@ pub async fn run_trojan(
         while let Some(event) = rx.recv().await {
             match event {
                 CommandEvent::Stdout(line) => {
-                    log::debug!("{}", String::from_utf8_lossy(&line).trim());
-                    // 使用 app_handle_clone 发送事件
-                    let _ =
-                        app_handle_clone.emit("trojan-log", String::from_utf8_lossy(&line).trim());
+                      let raw_line = String::from_utf8_lossy(&line);
+                      let trimmed_line = raw_line.trim();
+
+                     log::debug!("{}", trimmed_line);
+                     if trimmed_line.contains("[FATAL]") {
+                       let _ = app_handle_clone.emit("trojan-log", trimmed_line);
+                    }
                 }
                 CommandEvent::Stderr(line) => {
                     let _ = app_handle_clone.emit(
