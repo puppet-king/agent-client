@@ -36,7 +36,7 @@ pub fn run() {
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_shell::init())
         .on_window_event(|window, event| {
-            log::info!("Window event: {:?}", event);
+            // log::info!("Window event: {:?}", event);
 
             match event {
                 // 处理窗口关闭请求：隐藏窗口到后台，阻止真正关闭
@@ -49,7 +49,7 @@ pub fn run() {
                 // 处理窗口焦点事件：解决黑屏唤醒卡死问题
                 WindowEvent::Focused(focused) => {
                     if *focused {
-                        log::info!("窗口获得焦点，唤醒 Webview 渲染");
+                        // log::info!("窗口获得焦点，唤醒 Webview 渲染");
                         // 执行 JS 激活渲染循环
                         // let _ = window.run_javascript("window.requestAnimationFrame(() => { console.log('resume'); })");
                     }
@@ -92,6 +92,7 @@ pub fn run() {
             trojan::stop_trojan,
             trojan::get_trojan_status,
             logger::flush_logs,
+            logger::get_logs_page,
         ]);
 
     builder

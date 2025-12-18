@@ -34,7 +34,7 @@ export const useConfStore = defineStore("conf", () => {
     // 3. 开始初始化并存入 Promise
     initPromise.value = (async () => {
       try {
-        console.log("🚀 [Store] 执行全局初始化...")
+        console.debug("🚀 [Store] 执行全局初始化...")
         await initHomeDir()
         await loadIndex()
         await loadState()

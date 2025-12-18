@@ -38,6 +38,8 @@ onMounted(async () => {
     await listenTrojanLog((msg) => {
       const log = parseTrojanGoLog(msg)
       if (log) {
+        // console.log(log)
+
         if (log.level === "FATAL") {
           const message = log.message ?? ""
           if (log.message) {
@@ -103,26 +105,29 @@ const uploadConf = async () => {
   }
 }
 
-const onConnect = async (name: string) => {
-  if (enabledName.value === name) {
-    return
-  }
+const isProcessing = ref(false)
 
-  console.log("onConnect")
-  enabledName.value = name
-  if (name) {
-    // 代表开启
-    try {
+const onConnect = async (name: string) => {
+  if (isProcessing.value) return
+
+  // 这里的 enabledName 如果是 UI 状态，建议等后端返回成功后再更新
+  if (enabledName.value === name && name !== "") return
+
+  isProcessing.value = true
+  console.log("开始切换状态:", name)
+
+  try {
+    if (name) {
       await runTrojan(name)
-    } catch (err) {
-      console.error(err)
-    }
-  } else {
-    try {
+      enabledName.value = name
+    } else {
       await stopTrojan()
-    } catch (err) {
-      console.error(err)
+      enabledName.value = ""
     }
+  } catch (err) {
+    console.error("Trojan 操作失败:", err)
+  } finally {
+    isProcessing.value = false
   }
 }
 </script>

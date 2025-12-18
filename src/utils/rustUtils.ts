@@ -22,14 +22,13 @@ import type { TrojanStatus } from "@/typings/config.ts"
  */
 export async function runTrojan(name: string) {
   try {
-    // 1. 获取主目录并拼接配置文件绝对路径
+    // 获取主目录并拼接配置文件绝对路径
     const home = await homeDir()
     const configPath = await join(home, CONF_DIR, `${name}.json`)
 
     console.log(`正在启动 Trojan: ${name}, 路径: ${configPath}`)
 
-    // 2. 调用 Rust 命令
-    // 注意：参数名必须与 Rust 函数中的变量名完全一致
+    // 调用 Rust 命令
     await invoke("run_trojan", {
       configPath: configPath,
       configName: name,

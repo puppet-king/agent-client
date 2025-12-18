@@ -48,18 +48,23 @@ pub fn stop_trojan_internal(state: &TrojanState) -> Result<(), String> {
         }
     }
 
-    let mut lock = state.child.lock().unwrap();
-    if let Some(child) = lock.take() {
-        child.kill().map_err(|e| {
-            log::error!("无法杀掉进程: {}", e);
-            format!("无法杀掉进程: {}", e)
-        })?;
-    }
+        let  maybe_child = {
+           let mut lock = state.child.lock().unwrap();
+           lock.take() // take() 会留下 None 并返回内容，操作极快
+        };
 
-    
-    // 停止后清除保存的名称
-    *state.current_config_name.lock().unwrap() = None;
-    Ok(())
+       // 在锁之外执行 kill()，这样即使 kill 阻塞，也不会阻塞其他状态查询
+       if let Some(child) = maybe_child {
+           child.kill().map_err(|e| {
+               log::error!("无法杀掉进程: {}", e);
+               format!("无法杀掉进程: {}", e)
+           })?;
+       }
+
+       {
+           *state.current_config_name.lock().unwrap() = None;
+       }
+       Ok(())
 }
 
 #[tauri::command]
@@ -123,6 +128,7 @@ pub async fn run_trojan(
         while let Some(event) = rx.recv().await {
             match event {
                 CommandEvent::Stdout(line) => {
+                    log::debug!("{}", String::from_utf8_lossy(&line).trim());
                     // 使用 app_handle_clone 发送事件
                     let _ =
                         app_handle_clone.emit("trojan-log", String::from_utf8_lossy(&line).trim());

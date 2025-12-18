@@ -24,15 +24,11 @@ export function forwardConsole(
   const original = console[fnName]
   console[fnName] = (...args: unknown[]) => {
     original(...args) // 原始控制台输出
-    const message = args
-      .map((arg) => {
-        try {
-          return typeof arg === "string" ? arg : JSON.stringify(arg)
-        } catch {
-          return String(arg)
-        }
-      })
-      .join(" ")
-    void logger(message) // 转发给 Tauri 日志插件
+    setTimeout(() => {
+      const message = args
+        .map((a) => (typeof a === "object" ? JSON.stringify(a) : String(a)))
+        .join(" ")
+      logger(message).catch(() => {})
+    }, 0)
   }
 }

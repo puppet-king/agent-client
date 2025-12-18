@@ -9,42 +9,39 @@ import {
 } from "lucide-vue-next"
 import NavBar from "@/components/NavBar.vue"
 import ButtonWrapper from "@/components/ButtonWrapper.vue"
-import {
-  BaseDirectory,
-  readTextFileLines,
-  writeTextFile,
-} from "@tauri-apps/plugin-fs"
+import { BaseDirectory, writeTextFile } from "@tauri-apps/plugin-fs"
 import { LOG_FILE } from "@/config/constants.ts"
 import { invoke } from "@tauri-apps/api/core"
+import { appLogDir, join } from "@tauri-apps/api/path"
 
 const logs = ref<
   { time: string; msg: string; type: "info" | "error" | "warn" }[]
 >([])
 const isLoading = ref(false)
-const PAGE_SIZE = 100
-let logIterator: AsyncIterableIterator<string> | null = null
 const hasMore = ref(true) // 是否还有更多日志可以加载
+const PAGE_SIZE = 50 // 每页加载条数
+const currentPage = ref(0) // 记录当前读到第几页
 
 const LOG_REGEX =
-  /^\[(?<date>[^\]]+)\]\[(?<time>[^\]]+)\]\[(?<origin>.+)\]\[(?<level>[A-Z]+)\]\s*(?<content>.*)$/
+  /^\[(?<date>[^\]]+)\]\[(?<time>[^\]]+)\]\[(?<level>[A-Z]+)\]\[(?<origin>[^\]]+)\]\s*(?<content>.*)$/
 function handleLog(line: string) {
+  if (line.includes("[vite]")) return
+
+  // console.log(line)
   const match = line.match(LOG_REGEX)
 
   // 使用 match?.groups 进行严格判断
   if (match && match.groups) {
-    // const [, date = "", time = "", origin = "", level = "", content = ""] =
-    const [, , time = "", origin = "", level = "", content = ""] = match
-    const lowerLevel = level.toLowerCase()
-
-    let logType: "error" | "warn" | "info" = "info"
-    if (lowerLevel.includes("err")) logType = "error"
-    else if (lowerLevel.includes("warn")) logType = "warn"
-
+    const [, , time = "", level = "", , content = ""] = match
+    const lowerLevel = (level || "").toLowerCase()
     logs.value.push({
-      // time: `${date} ${time}`,
-      time: `${time}`,
-      msg: `${origin} ${content}`,
-      type: logType,
+      time: time,
+      msg: content.trim(),
+      type: lowerLevel.includes("err")
+        ? "error"
+        : lowerLevel.includes("warn")
+          ? "warn"
+          : "info",
     })
   } else {
     // 回退逻辑
@@ -57,12 +54,12 @@ function handleLog(line: string) {
 }
 
 onMounted(async () => {
-  void loadLogs()
+  console.log("onMounted")
+  // await invoke("flush_logs")
+  void loadLogs(true)
 })
 
-onUnmounted(() => {
-  clearLogs()
-})
+onUnmounted(() => {})
 
 const clearLogs = async () => {
   await writeTextFile(LOG_FILE, "", {
@@ -71,9 +68,6 @@ const clearLogs = async () => {
 
   // 清空前端显示的数组
   logs.value = []
-
-  // 关键：重置迭代器和状态，防止滚动加载继续读取旧文件的残余
-  logIterator = null
   hasMore.value = false
 }
 
@@ -83,38 +77,29 @@ const loadLogs = async (isRefresh = false) => {
 
   try {
     // 如果是刷新或首次加载，初始化迭代器
-    if (isRefresh || !logIterator) {
-      await invoke("flush_logs")
+    if (isRefresh) {
+      currentPage.value = 0
       logs.value = []
       hasMore.value = true
+    }
+    const logDir = await appLogDir()
+    const logPath = await join(logDir, LOG_FILE)
+    const newLines = await invoke<string[]>("get_logs_page", {
+      path: logPath,
+      page: currentPage.value,
+      pageSize: PAGE_SIZE,
+    })
 
-      const lines = await readTextFileLines(LOG_FILE, {
-        baseDir: BaseDirectory.AppLog,
-      })
+    newLines.forEach((line) => {
+      handleLog(line)
+    })
 
-      // 获取迭代器实例
-      logIterator = lines[Symbol.asyncIterator]()
+    // 如果返回的条数少于请求条数，说明到底了
+    if (newLines.length < PAGE_SIZE) {
+      hasMore.value = false
     }
 
-    // 再次检查防止初始化失败
-    if (!logIterator) return
-
-    let count = 0
-    while (count < PAGE_SIZE) {
-      const result = await logIterator.next()
-
-      if (result.done) {
-        hasMore.value = false
-        break
-      }
-
-      const line = result.value.trim()
-      if (!line) continue
-
-      // 解析并放入数组
-      handleLog(line) // 内部用 push
-      count++
-    }
+    currentPage.value++ // 页码增加，下次滚动读更旧的
   } catch (e) {
     console.error("读取日志流失败:", e)
   } finally {
@@ -126,7 +111,7 @@ const handleScroll = (e: Event) => {
   const target = e.target as HTMLElement
   // 距离底部小于 20px 时触发加载
   const bottom = target.scrollHeight - target.scrollTop - target.clientHeight
-  if (bottom < 20 && !isLoading.value && hasMore.value) {
+  if (bottom < 50 && !isLoading.value && hasMore.value) {
     loadLogs(false)
   }
 }
