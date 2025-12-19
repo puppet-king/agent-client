@@ -1,4 +1,5 @@
 import { CONF_DIR, CONFIG_PATH, USER_DIR } from "@/config/constants"
+import { platform } from "@tauri-apps/plugin-os"
 import {
   BaseDirectory,
   exists,
@@ -163,40 +164,78 @@ export async function writeTextFileToHome(
 
 export async function readTextFileToHome(filePath: string): Promise<string> {
   return await readTextFile(filePath, {
-    baseDir: BaseDirectory.Home,
+    baseDir: await getBestBaseDir(),
   })
 }
 
 export async function initHomeDir(): Promise<void> {
-  const isExist = await exists(USER_DIR, {
-    baseDir: BaseDirectory.Home,
+  const isConfDirExist = await exists("conf", {
+    baseDir: await getBestBaseDir(),
   })
 
-  if (!isExist) {
-    await mkdir(USER_DIR, {
-      baseDir: BaseDirectory.Home,
-    })
-  }
+  console.log("isConfDirExist", isConfDirExist)
 
-  const isConfDirExist = await exists(CONF_DIR, {
-    baseDir: BaseDirectory.Home,
-  })
-
-  if (!isConfDirExist) {
-    await mkdir(CONF_DIR, {
-      baseDir: BaseDirectory.Home,
-    })
-  }
-
-  const isPathExist = await exists(CONFIG_PATH, {
-    baseDir: BaseDirectory.Home,
-  })
-
-  if (!isPathExist) {
-    // const json = {
-    //   cc,
-    // }
-    //
-    // await writeTextFileToHome(CONFIG_PATH, JSON.stringify(obj, null, 2))
-  }
+  // const isExist = await exists(USER_DIR, {
+  //   baseDir: await getBestBaseDir(),
+  // })
+  //
+  // if (!isExist) {
+  //   await mkdir(USER_DIR, {
+  //     baseDir: await getBestBaseDir(),
+  //   })
+  // }
+  //
+  // const isConfDirExist = await exists(CONF_DIR, {
+  //   baseDir: await getBestBaseDir(),
+  // })
+  //
+  // if (!isConfDirExist) {
+  //   await mkdir(CONF_DIR, {
+  //     baseDir: await getBestBaseDir(),
+  //   })
+  // }
+  //
+  // const isPathExist = await exists(CONFIG_PATH, {
+  //   baseDir: await getBestBaseDir(),
+  // })
+  //
+  // if (!isPathExist) {
+  //   // const json = {
+  //   //   cc,
+  //   // }
+  //   //
+  //   // await writeTextFileToHome(CONFIG_PATH, JSON.stringify(obj, null, 2))
+  // }
 }
+
+export const getBestBaseDir = (() => {
+  let cache: Promise<BaseDirectory> | null = null
+  return async (): Promise<BaseDirectory> => {
+    // 如果缓存存在，直接返回缓存的 Promise
+    if (cache) return cache
+
+    // 否则，初始化子方法并赋值给 cache
+    cache = (async () => {
+      const osType = platform()
+      if (osType === "android" || osType === "ios") {
+        return BaseDirectory.AppData
+      }
+      return BaseDirectory.Home
+    })()
+
+    return cache
+  }
+})()
+
+export const isDesktop = (() => {
+  let cache: boolean = false
+  return (): boolean => {
+    if (cache) return cache
+    cache = (() => {
+      const osType = platform()
+      return !(osType === "android" || osType === "ios")
+    })()
+
+    return cache
+  }
+})()

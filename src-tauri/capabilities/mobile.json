@@ -1,0 +1,34 @@
+{
+  "$schema": "../gen/schemas/mobile-schema.json",
+  "identifier": "mobile-capability",
+  "platforms": ["iOS", "android"],
+  "windows": [
+    "puppet4105"
+  ],
+  "permissions": [
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [{ "path": "$APPDATA/**" }]
+    },
+    {
+      "identifier": "fs:allow-write",
+      "allow": [{ "path": "$APPDATA/**" }]
+    },
+    {
+      "identifier": "fs:allow-read-text-file",
+      "allow": [{ "path": "$APPDATA/**" }]
+    },
+    {
+      "identifier": "fs:allow-read",
+      "allow": [{ "path": "$APPDATA/**" }]
+    },
+    {
+      "identifier": "core:event:allow-listen",
+      "allow": [
+        { "event": "trojan-log" },
+        { "event": "trojan-error" },
+        { "event": "trojan-status" }
+      ]
+    }
+  ]
+}

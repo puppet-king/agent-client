@@ -9,66 +9,11 @@
     "core:path:default",
     "core:window:default",
     "core:window:allow-start-dragging",
-    "store:default",
-    "stronghold:default",
     "dialog:default",
     "dialog:allow-open",
     "fs:default",
     "log:default",
     "core:app:allow-version",
-    "fs:allow-read-text-file-lines",
-    {
-      "identifier": "fs:allow-exists",
-      "allow": [{ "path": "$HOME/*" }, { "path": "$HOME/.agent1215-client/**"}]
-    },
-    {
-      "identifier": "fs:scope-home-recursive",
-      "allow": [{ "path": "$HOME/.agent1215-client/conf/*" }]
-    },
-    {
-      "identifier": "fs:allow-read-text-file",
-      "allow": [{ "path":"$HOME/.agent1215-client/**" }]
-    },
-    {
-      "identifier": "fs:allow-write-text-file",
-      "allow": [{ "path": "$HOME/.agent1215-client/**" }]
-    },
-    {
-      "identifier": "fs:allow-mkdir",
-      "allow": [{ "path": "$HOME/*" }, { "path": "$HOME/.agent1215-client/*"}]
-    },
-    {
-      "identifier": "shell:allow-spawn",
-      "allow": [
-        {
-          "name": "binaries/trojan-go",
-          "args": [
-            "-config",
-            {
-              "validator": "\\S+"
-            }
-          ],
-          "sidecar": true
-        }
-      ]
-    },
-    {
-      "identifier": "shell:allow-kill",
-      "allow": [
-        {
-          "name": "binaries/trojan-go",
-          "sidecar": true
-        }
-      ]
-    },
-    {
-      "identifier": "core:event:allow-listen",
-      "allow": [
-        { "event": "trojan-log" },
-        { "event": "trojan-error" },
-        { "event": "trojan-status" }
-      ]
-    }
-
+    "os:default"
   ]
 }

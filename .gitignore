@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+# 忽略所有 Android 自动生成的错误报告压缩包
+bugreport-*.zip
+bugreport-*.txt

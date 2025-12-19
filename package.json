@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
+    "build": "vue-tsc -b && viite build",
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
-    "tauri:build-nobundle": "tauri build -- --no-bundle"
+    "tauri:build-nobundle": "tauri build -- --no-bundle",
+    "tauri:dev:android": "tauri android dev"
   },
   "dependencies": {
     "@headlessui/vue": "^1.7.23",
@@ -18,6 +19,7 @@
     "@tauri-apps/plugin-dialog": "^2.4.2",
     "@tauri-apps/plugin-fs": "^2.4.4",
     "@tauri-apps/plugin-log": "^2.7.1",
+    "@tauri-apps/plugin-os": "^2.3.2",
     "@tauri-apps/plugin-shell": "^2.3.3",
     "@tauri-apps/plugin-store": "^2.4.1",
     "@tauri-apps/plugin-stronghold": "^2.3.1",

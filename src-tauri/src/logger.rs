@@ -1,9 +1,8 @@
 use log::LevelFilter;
-use tauri::AppHandle;
-use tauri_plugin_log::{Builder, RotationStrategy, Target, TargetKind};
 use rev_lines::RevLines;
 use std::fs::File;
-
+use tauri::AppHandle;
+use tauri_plugin_log::{Builder, RotationStrategy, Target, TargetKind};
 
 pub fn init_logging(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(debug_assertions)]
@@ -62,7 +61,11 @@ pub fn flush_logs() {
 
 // 反向读取
 #[tauri::command]
-pub async fn get_logs_page(path: String, page: usize, page_size: usize) -> Result<Vec<String>, String> {
+pub async fn get_logs_page(
+    path: String,
+    page: usize,
+    page_size: usize,
+) -> Result<Vec<String>, String> {
     let file = File::open(&path).map_err(|e| e.to_string())?;
     let rev_lines = RevLines::new(file);
 

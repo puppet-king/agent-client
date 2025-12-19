@@ -24,14 +24,15 @@
       }
     ],
     "security": {
-      "csp": null
-    }
+      "csp": null,
+      "capabilities": ["default", "desktop-capability"]
+    },
   },
   "bundle": {
     "active": true,
     "targets": "all",
     // https://v2.tauri.app/plugin/updater/ 启用此设置会true指示 Tauri 的应用打包器创建更新程序工件
-    "createUpdaterArtifacts": true,
+    "createUpdaterArtifacts": false,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

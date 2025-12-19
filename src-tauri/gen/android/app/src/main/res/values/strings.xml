@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">puppet-trojan-client</string>
+    <string name="main_activity_title">puppet-trojan-client</string>
+</resources>

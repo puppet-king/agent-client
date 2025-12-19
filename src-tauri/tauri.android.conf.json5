@@ -1,0 +1,16 @@
+{
+  "app": {
+    "security": {
+      "capabilities": ["default", "mobile-capability"]
+    }
+  },
+  "bundle": {
+    "android": {
+      "autoIncrementVersionCode": true,
+      "minSdkVersion": 24, // 7.0
+      "versionCode": 100
+
+    },
+    "externalBin": [] // 显式清空，这样安卓编译就不会去寻找二进制文件
+  }
+}
