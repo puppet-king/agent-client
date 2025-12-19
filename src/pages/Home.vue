@@ -140,6 +140,7 @@ const onConnect = async (name: string) => {
       enabledName.value = ""
     }
   } catch (err) {
+    toast.error("操作失败")
     console.error("Trojan 操作失败:", err)
   } finally {
     isProcessing.value = false

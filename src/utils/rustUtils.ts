@@ -1,4 +1,4 @@
-import { CONF_DIR, CONFIG_PATH, USER_DIR } from "@/config/constants"
+import { CONF_DIR, USER_DIR } from "@/config/constants"
 import { platform } from "@tauri-apps/plugin-os"
 import {
   BaseDirectory,
@@ -169,42 +169,36 @@ export async function readTextFileToHome(filePath: string): Promise<string> {
 }
 
 export async function initHomeDir(): Promise<void> {
-  const isConfDirExist = await exists("conf", {
+  const isExist = await exists(USER_DIR, {
     baseDir: await getBestBaseDir(),
   })
 
-  console.log("isConfDirExist", isConfDirExist)
+  if (!isExist) {
+    await mkdir(USER_DIR, {
+      baseDir: await getBestBaseDir(),
+    })
+  }
 
-  // const isExist = await exists(USER_DIR, {
-  //   baseDir: await getBestBaseDir(),
-  // })
-  //
-  // if (!isExist) {
-  //   await mkdir(USER_DIR, {
-  //     baseDir: await getBestBaseDir(),
-  //   })
-  // }
-  //
-  // const isConfDirExist = await exists(CONF_DIR, {
-  //   baseDir: await getBestBaseDir(),
-  // })
-  //
-  // if (!isConfDirExist) {
-  //   await mkdir(CONF_DIR, {
-  //     baseDir: await getBestBaseDir(),
-  //   })
-  // }
-  //
+  const isConfDirExist = await exists(CONF_DIR, {
+    baseDir: await getBestBaseDir(),
+  })
+
+  if (!isConfDirExist) {
+    await mkdir(CONF_DIR, {
+      baseDir: await getBestBaseDir(),
+    })
+  }
+
   // const isPathExist = await exists(CONFIG_PATH, {
   //   baseDir: await getBestBaseDir(),
   // })
-  //
+
   // if (!isPathExist) {
-  //   // const json = {
-  //   //   cc,
-  //   // }
-  //   //
-  //   // await writeTextFileToHome(CONFIG_PATH, JSON.stringify(obj, null, 2))
+  // const json = {
+  //   cc,
+  // }
+  //
+  // await writeTextFileToHome(CONFIG_PATH, JSON.stringify(obj, null, 2))
   // }
 }
 

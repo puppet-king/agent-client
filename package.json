@@ -5,12 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && viite build",
+    "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
-    "tauri:build-nobundle": "tauri build -- --no-bundle",
+    "tauri:build-nobundle": "tauri build  --no-bundle",
     "tauri:dev:android": "tauri android dev"
   },
   "dependencies": {

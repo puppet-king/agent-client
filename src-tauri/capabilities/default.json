@@ -14,6 +14,7 @@
     "fs:default",
     "log:default",
     "core:app:allow-version",
-    "os:default"
+    "os:default",
+    "core:event:allow-unlisten"
   ]
 }
