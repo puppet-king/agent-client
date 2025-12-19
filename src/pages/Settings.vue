@@ -6,6 +6,7 @@ import UISwitch from "@/components/UISwitch.vue"
 import { enable, isEnabled, disable } from "@tauri-apps/plugin-autostart"
 import logoUrl from "@/assets/logo.png"
 import { getVersion } from "@tauri-apps/api/app"
+import { isDesktop } from "@/utils/rustUtils.ts"
 
 defineOptions({
   name: "ClientSettings",
@@ -14,9 +15,13 @@ defineOptions({
 const enabled = ref(false)
 const version = ref("")
 const platformName = import.meta.env.VITE_BUILD_PLATFORM
+const desktop = isDesktop()
 
 onMounted(async () => {
-  enabled.value = await isEnabled()
+  if (desktop) {
+    enabled.value = await isEnabled()
+  }
+
   version.value = await getVersion()
   console.debug("version", version.value)
 })
@@ -77,6 +82,7 @@ const onAutoStartEnabled = async () => {
 
     <div class="flex flex-1 flex-col pt-2 gap-2">
       <div
+        v-if="desktop"
         class="flex flex-col bg-dark-2 py-3 px-4 hover:bg-slate-800 cursor-pointer transition-colors border-b border-white/5"
       >
         <div class="flex items-center justify-between">

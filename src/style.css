@@ -2,6 +2,7 @@
 
 :root {
   --primary-rgb: 114, 16, 255;
+  --safe-area-top: env(safe-area-inset-top);
 }
 
 @theme {
@@ -82,3 +83,4 @@
 *::-webkit-scrollbar-thumb {
   background: transparent; /* 滑块也透明 */
 }
+

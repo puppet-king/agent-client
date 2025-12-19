@@ -29,7 +29,6 @@ router.beforeEach(async (_to, _from, next) => {
       await conf.initConfig()
     } catch (error) {
       console.error("配置文件初始化失败:", error)
-      // 如果初始化失败，你可以决定是继续还是停留在错误页
     }
   }
 

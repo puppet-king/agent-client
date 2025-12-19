@@ -11,13 +11,14 @@
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
     "tauri:build-nobundle": "tauri build  --no-bundle",
-    "tauri:dev:android": "tauri android dev"
+    "tauri:dev:android": "powershell -Command \"npm run tauri android dev | Where-Object { $_ -notmatch 'RustStdoutStderr' }\""
   },
   "dependencies": {
     "@headlessui/vue": "^1.7.23",
     "@tauri-apps/plugin-autostart": "^2.5.1",
     "@tauri-apps/plugin-dialog": "^2.4.2",
     "@tauri-apps/plugin-fs": "^2.4.4",
+    "@tauri-apps/plugin-haptics": "^2.3.2",
     "@tauri-apps/plugin-log": "^2.7.1",
     "@tauri-apps/plugin-os": "^2.3.2",
     "@tauri-apps/plugin-shell": "^2.3.3",

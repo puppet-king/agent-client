@@ -12,6 +12,7 @@ import { toast } from "@/composables/useToast"
 import { useConfStore } from "@/stores/userConf"
 import { storeToRefs } from "pinia"
 import { basename } from "@tauri-apps/api/path"
+
 // import { appDataDir } from "@tauri-apps/api/path"
 import {
   runTrojan,
@@ -21,6 +22,7 @@ import {
   isDesktop,
 } from "@/utils/rustUtils"
 import type { TunnelConfig } from "@/typings/config.ts"
+import { haptic } from "@/utils/haptics.ts"
 
 defineOptions({
   name: "PuppetHome",
@@ -50,6 +52,7 @@ onMounted(async () => {
               const portConflictRegex =
                 /listen (tcp|udp) 127\.0\.0\.1:(\d+): bind/i
               const conflictMatch = message.match(portConflictRegex)
+              void haptic.notify("error")
               if (conflictMatch && conflictMatch[1] && conflictMatch[2]) {
                 toast.error(` ${conflictMatch[2]}  端口被占用`)
                 enabledName.value = ""
@@ -71,6 +74,7 @@ onMounted(async () => {
 })
 
 const handleTunnelClick = (name: string) => {
+  haptic.impact("light")
   console.debug("jumPath", `/detail/${name}`)
   router.push(`/detail/${name}`)
 }
@@ -80,7 +84,7 @@ const handleCreateManual = () => {
   router.push("/create")
 }
 
-// 3. 关键：组件卸载时取消监听
+// 组件卸载时取消监听
 onUnmounted(() => {
   if (unlisten) {
     unlisten()
@@ -116,7 +120,7 @@ const uploadConf = async () => {
       toast.error(errors[0], 3000)
     }
   } catch (e) {
-    console.error(e)
+    console.info(e)
   }
 }
 
@@ -128,6 +132,7 @@ const onConnect = async (name: string) => {
   // 这里的 enabledName 如果是 UI 状态，建议等后端返回成功后再更新
   if (enabledName.value === name && name !== "") return
 
+  void haptic.select()
   isProcessing.value = true
   console.log("开始切换状态:", name)
 
@@ -135,11 +140,14 @@ const onConnect = async (name: string) => {
     if (name) {
       await runTrojan(name)
       enabledName.value = name
+      void haptic.impact("light")
     } else {
       await stopTrojan()
       enabledName.value = ""
+      void haptic.select()
     }
   } catch (err) {
+    void haptic.notify("error")
     toast.error("操作失败")
     console.error("Trojan 操作失败:", err)
   } finally {

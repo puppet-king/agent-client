@@ -43,6 +43,9 @@ tauri-plugin-store = "2"
 tauri-plugin-shell = "2"
 sysproxy = "0.3"
 
+[target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
+tauri-plugin-haptics = "2"
+
 [profile.dev]
 incremental = true # 增量编译，只编译修改过的部分，加快开发编译速度。
 

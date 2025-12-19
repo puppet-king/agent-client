@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router"
 import { ArrowLeft } from "lucide-vue-next"
+import { haptic } from "@/utils/haptics.ts"
+import { isDesktop } from "@/utils/rustUtils.ts"
 
 interface Props {
   title?: string
@@ -21,6 +23,7 @@ const emit = defineEmits<Emits>()
 const router = useRouter()
 
 const handleBack = () => {
+  void haptic.impact("light")
   emit("back")
   router.back()
 }
@@ -28,10 +31,11 @@ const handleBack = () => {
 
 <template>
   <header
-    class="pt-2 px-4 pb-2 shadow-md flex items-center justify-between sticky top-0 z-40 bg-dark-1/90 backdrop-blur-md"
+    class="px-4 pb-2 shadow-md flex items-center justify-between sticky top-0 z-40 bg-dark-1/90 backdrop-blur-md"
+    :class="isDesktop() ? 'pt-2' : 'pt-6'"
     data-tauri-drag-region
   >
-    <div class="flex items-center gap-3" data-tauri-drag-region>
+    <div class="flex items-center z-10 min-w-[40px]" data-tauri-drag-region>
       <button
         v-if="props.showBack"
         class="rounded-full p-2 text-slate-400 hover:text-white hover:bg-dark-3 transition-colors cursor-pointer active:scale-95"
@@ -40,17 +44,25 @@ const handleBack = () => {
       >
         <ArrowLeft :size="20" />
       </button>
-
-      <h1
-        class="text-base font-semibold text-white tracking-wide"
-        data-tauri-drag-region
-      >
-        {{ props.title }}
-      </h1>
     </div>
 
-    <!-- 右侧插槽，确保插槽内容不会被拖动窗口影响 -->
-    <div class="flex items-center gap-2" data-tauri-drag-region="false">
+    <h1
+      class="font-semibold text-white tracking-wide transition-all truncate"
+      :class="[
+        isDesktop()
+          ? 'static flex-1 ml-3 text-base'
+          : 'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[calc(50%-10px)] text-lg w-full max-w-[60%] text-center pointer-events-none',
+      ]"
+      data-tauri-drag-region
+    >
+      {{ props.title }}
+    </h1>
+
+    <!-- 右侧容器：固定在右边 -->
+    <div
+      class="flex items-center gap-2 z-10 min-w-[40px] justify-end"
+      data-tauri-drag-region="false"
+    >
       <slot name="right" />
     </div>
   </header>

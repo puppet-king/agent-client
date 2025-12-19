@@ -1,34 +1,53 @@
 {
   "$schema": "../gen/schemas/mobile-schema.json",
   "identifier": "mobile-capability",
-  "platforms": ["iOS", "android"],
+  "platforms": [
+    "iOS",
+    "android"
+  ],
   "windows": [
     "puppet4105"
   ],
   "permissions": [
+    "haptics:allow-impact-feedback",
+    "haptics:allow-notification-feedback",
+    "haptics:allow-selection-feedback",
+    "haptics:allow-vibrate",
+    "fs:allow-app-write-recursive",
+    "fs:allow-app-read-recursive",
+    "fs:scope-app",
     {
       "identifier": "fs:allow-exists",
-      "allow": [{ "path": "$APPDATA/**" }]
+      "allow": [
+        { "path": "$APPDATA/**" }
+      ]
     },
     {
-      "identifier": "fs:allow-write",
+      "identifier": "fs:allow-mkdir",
       "allow": [{ "path": "$APPDATA/**" }]
     },
     {
       "identifier": "fs:allow-read-text-file",
-      "allow": [{ "path": "$APPDATA/**" }]
-    },
-    {
-      "identifier": "fs:allow-read",
-      "allow": [{ "path": "$APPDATA/**" }]
+      "allow": [
+        {
+          "path": "$APPDATA/**"
+        }
+      ]
     },
     {
       "identifier": "core:event:allow-listen",
       "allow": [
-        { "event": "trojan-log" },
-        { "event": "trojan-error" },
-        { "event": "trojan-status" }
+        {
+          "event": "trojan-log"
+        },
+        {
+          "event": "trojan-error"
+        },
+        {
+          "event": "trojan-status"
+        }
       ]
-    }
+    },
+    "haptics:default"
   ]
 }

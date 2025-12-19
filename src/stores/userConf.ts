@@ -6,6 +6,7 @@ import { CONF_DIR, INDEX_FILE } from "@/config/constants"
 import {
   getTrojanStatus,
   initHomeDir,
+  isDesktop,
   readTextFileToHome,
   stopTrojan,
   writeTextFileToHome,
@@ -37,7 +38,9 @@ export const useConfStore = defineStore("conf", () => {
         console.debug("🚀 [Store] 执行全局初始化...")
         await initHomeDir()
         await loadIndex()
-        await loadState()
+        if (isDesktop()) {
+          await loadState()
+        }
         isInitialized.value = true
       } finally {
         initPromise.value = null // 结束后清除，方便后续手动重刷
@@ -66,7 +69,7 @@ export const useConfStore = defineStore("conf", () => {
       index.value = JSON.parse(data)
       console.log("loadIndex index.value ", index.value)
     } catch (error) {
-      console.error("loadIndex catch", error)
+      console.log("loadIndex catch", error)
       index.value = []
     }
   }

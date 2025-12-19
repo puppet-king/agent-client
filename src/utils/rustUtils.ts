@@ -8,16 +8,12 @@ import {
   writeTextFile,
 } from "@tauri-apps/plugin-fs"
 import { homeDir, join } from "@tauri-apps/api/path"
-// import { Command } from "@tauri-apps/plugin-shell"
-// import { toast } from "@/composables/useToast"
 import { invoke } from "@tauri-apps/api/core"
 import { listen } from "@tauri-apps/api/event"
 import type { TrojanStatus } from "@/typings/config.ts"
 
-// 全局单例
-// let trojanChild: Child | null = null
-
 /**
+ * 仅 桌面应用
  * 运行 Trojan-go
  * @param name 配置文件名（不带 .json）
  */
@@ -43,6 +39,7 @@ export async function runTrojan(name: string) {
 }
 
 /**
+ * 仅 桌面应用
  * 停止 Trojan-go
  */
 export async function stopTrojan() {
@@ -56,6 +53,7 @@ export async function stopTrojan() {
 }
 
 /**
+ * 仅 桌面应用
  * 获取当前运行状态（用于页面刷新后同步 UI）
  */
 export async function getTrojanStatus(): Promise<TrojanStatus> {
@@ -68,6 +66,7 @@ export async function getTrojanStatus(): Promise<TrojanStatus> {
 }
 
 /**
+ * 仅 桌面应用
  * 监听日志输出（全局监听）
  * @param callback 处理日志的回调函数
  */
@@ -78,61 +77,10 @@ export async function listenTrojanLog(callback: (log: string) => void) {
   })
 }
 
-// export async function runTrojanV2(name: string) {
-//   console.log("runTrojan", trojanChild)
-//   if (trojanChild) {
-//     console.log("trojan-go 已经在运行", trojanChild)
-//     await trojanChild.kill()
-//     trojanChild = null
-//   }
-//
-//   const dir = await homeDir()
-//   const configPath = await join(dir, CONF_DIR, name + ".json")
-//   console.log("configPath", configPath)
-//   const command = Command.sidecar("binaries/trojan-go", ["-config", configPath])
-//   command.stdout.on("data", (line) => {
-//     const text = line.trim()
-//     const log = parseTrojanGoLog(text)
-//     if (log) {
-//       console.log("Level:", log.level)
-//       console.log("Time:", log.timestamp)
-//       console.log("Message:", log.message)
-//
-//       // 如果是端口占用错误，可以再用正则提取端口
-//       const portConflictRegex = /listen (tcp|udp) 127\.0\.0\.1:(\d+): bind/i
-//       const conflictMatch = log.message.match(portConflictRegex)
-//       if (conflictMatch) {
-//         toast.error(` ${conflictMatch[2]}  端口被占用`)
-//         console.error(
-//           `[trojan-go] ${conflictMatch[1].toUpperCase()} port ${conflictMatch[2]} conflict`,
-//         )
-//       }
-//
-//       console.log("[trojan-go]", line)
-//     }
-//   })
-//
-//   command.on("close", (data) => {
-//     console.log(
-//       `command finished with code ${data.code} and signal ${data.signal}`,
-//     )
-//
-//     trojanChild = null
-//   })
-//
-//   command.stderr.on("data", (line) => console.error("[trojan-go stderr]", line))
-//   trojanChild = await command.spawn()
-//   console.log("trojan-go 运行成功", trojanChild)
-// }
-//
-// export async function stopTrojanV2() {
-//   if (trojanChild) {
-//     console.log("trojan-go 停止运行", trojanChild)
-//     await trojanChild.kill()
-//     trojanChild = null
-//   }
-// }
-
+/**
+ * 格式化日志
+ * @param line
+ */
 export function parseTrojanGoLog(line: string) {
   // 匹配 [LEVEL] YYYY/MM/DD HH:MM:SS message
   const regex = /^\[(\w+)\]\s+(\d{4}\/\d{2}\/\d{2}\s+\d{2}:\d{2}:\d{2})\s+(.*)$/
@@ -147,13 +95,18 @@ export function parseTrojanGoLog(line: string) {
   return null
 }
 
+/**
+ * 根据环境自适应写入文件
+ * @param filePath
+ * @param content
+ */
 export async function writeTextFileToHome(
   filePath: string,
   content: string,
 ): Promise<boolean> {
   try {
     await writeTextFile(filePath, content, {
-      baseDir: BaseDirectory.Home,
+      baseDir: await getBestBaseDir(),
     })
     return true
   } catch (e) {
@@ -162,13 +115,16 @@ export async function writeTextFileToHome(
   }
 }
 
+// 根据环境自适应读取文件
 export async function readTextFileToHome(filePath: string): Promise<string> {
   return await readTextFile(filePath, {
     baseDir: await getBestBaseDir(),
   })
 }
 
+// 自适应初始化目录
 export async function initHomeDir(): Promise<void> {
+  console.log("initHomeDir")
   const isExist = await exists(USER_DIR, {
     baseDir: await getBestBaseDir(),
   })
@@ -188,20 +144,9 @@ export async function initHomeDir(): Promise<void> {
       baseDir: await getBestBaseDir(),
     })
   }
-
-  // const isPathExist = await exists(CONFIG_PATH, {
-  //   baseDir: await getBestBaseDir(),
-  // })
-
-  // if (!isPathExist) {
-  // const json = {
-  //   cc,
-  // }
-  //
-  // await writeTextFileToHome(CONFIG_PATH, JSON.stringify(obj, null, 2))
-  // }
 }
 
+// 获取符合条件的权限目录
 export const getBestBaseDir = (() => {
   let cache: Promise<BaseDirectory> | null = null
   return async (): Promise<BaseDirectory> => {
@@ -210,17 +155,18 @@ export const getBestBaseDir = (() => {
 
     // 否则，初始化子方法并赋值给 cache
     cache = (async () => {
-      const osType = platform()
-      if (osType === "android" || osType === "ios") {
-        return BaseDirectory.AppData
+      if (isDesktop()) {
+        return BaseDirectory.Home
       }
-      return BaseDirectory.Home
+
+      return BaseDirectory.AppData
     })()
 
     return cache
   }
 })()
 
+// 判断平台环境
 export const isDesktop = (() => {
   let cache: boolean = false
   return (): boolean => {

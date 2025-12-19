@@ -27,10 +27,23 @@ pub fn init_logging(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
             }),
         ])
         .filter(|metadata| {
-            metadata.target() != "tauri::manager"
-                && metadata.target() != "wry::webview2"
-                && metadata.target() != "tracing::span"
-                && metadata.target() != "tauri::app"
+            #[cfg(desktop)]
+            {
+                if metadata.target() == "tauri::manager" ||
+                   metadata.target() == "wry::webview2" ||
+                   metadata.target() == "tracing::span" ||
+                   metadata.target() == "tauri::app" {
+                    return false;
+                }
+            }
+
+            // 移动端特有的过滤逻辑
+            #[cfg(mobile)]
+            {
+            }
+
+            // 默认允许其他所有日志通过
+            true
         });
 
     #[cfg(debug_assertions)]
