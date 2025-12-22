@@ -35,9 +35,12 @@ const handleBack = () => {
     :class="isDesktop() ? 'pt-2' : 'pt-6'"
     data-tauri-drag-region
   >
-    <div class="flex items-center z-10 min-w-[40px]" data-tauri-drag-region>
+    <div
+      v-if="props.showBack"
+      class="flex items-center z-10 min-w-[40px]"
+      data-tauri-drag-region
+    >
       <button
-        v-if="props.showBack"
         class="rounded-full p-2 text-slate-400 hover:text-white hover:bg-dark-3 transition-colors cursor-pointer active:scale-95"
         data-tauri-drag-region="false"
         @click="handleBack"

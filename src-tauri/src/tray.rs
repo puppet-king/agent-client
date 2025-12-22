@@ -1,4 +1,4 @@
-use crate::trojan::{stop_trojan_internal, TrojanState};
+use crate::engine::trojan::{stop_trojan_internal, TrojanState};
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{TrayIconBuilder, TrayIconEvent},

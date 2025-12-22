@@ -12,7 +12,7 @@ defineOptions({
   name: "ClientSettings",
 })
 
-const enabled = ref(false)
+const enabled = ref(true)
 const version = ref("")
 const platformName = import.meta.env.VITE_BUILD_PLATFORM
 const desktop = isDesktop()
