@@ -1,4 +1,5 @@
 use tauri::{Builder, Wry, App};
+use crate::logger;
 
 pub fn build_plugins(builder: Builder<Wry>) -> Builder<Wry> {
     builder.plugin(tauri_plugin_haptics::init())
@@ -15,6 +16,6 @@ pub fn handle_setup_event(app: &mut App) -> Result<(), Box<dyn std::error::Error
     Ok(())
 }
 
-fn get_handlers() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool {
+pub fn get_handlers() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool {
     tauri::generate_handler![logger::flush_logs, logger::get_logs_page,]
 }
