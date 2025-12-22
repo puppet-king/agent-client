@@ -263,7 +263,17 @@ const handleSave = async () => {
                 class="flex-1 flex items-center justify-between bg-dark-3/50 p-3 rounded-xl border border-white/5"
               >
                 <span class="text-xs text-slate-400">证书验证</span>
-                <UISwitch :checked="form.ssl?.verify ?? true" size="small" />
+                <UISwitch
+                  :checked="form.ssl?.verify ?? true"
+                  size="small"
+                  @update:checked="
+                    (val) => {
+                      if (form.ssl) {
+                        form.ssl.verify = val
+                      }
+                    }
+                  "
+                />
               </div>
               <div
                 class="flex-1 flex items-center justify-between bg-dark-3/50 p-3 rounded-xl border border-white/5"
