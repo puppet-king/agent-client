@@ -138,10 +138,13 @@ const onConnect = async (name: string) => {
 
   try {
     if (name) {
+      console.info("开始启动:", name)
       await runTrojan(name)
       enabledName.value = name
       void haptic.impact("light")
+      console.info("开始启动 成功:", name)
     } else {
+      console.info("开始关闭")
       await stopTrojan()
       enabledName.value = ""
       void haptic.select()

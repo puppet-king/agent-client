@@ -6,10 +6,9 @@ use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_shell::process::{CommandChild, CommandEvent};
 use tauri_plugin_shell::ShellExt;
 
-// 1. 修改 TrojanState 结构体，增加一个 Option<String> 类型的 name 字段
+// 修改 TrojanState 结构体，增加一个 Option<String> 类型的 name 字段
 pub struct TrojanState {
     pub child: Mutex<Option<CommandChild>>,
-    // 存储当前正在运行的配置文件的名称（如 "config_home"）
     pub current_config_name: Mutex<Option<String>>,
 }
 
@@ -140,15 +139,27 @@ pub async fn run_trojan(
                         format!("[ERROR] {}", String::from_utf8_lossy(&line).trim()),
                     );
                 }
-                CommandEvent::Terminated(_) => {
-                    // 清理状态
-                    let mut lock = state_inner.child.lock().unwrap();
-                    *lock = None;
-                    let mut name_lock = state_inner.current_config_name.lock().unwrap();
-                    *name_lock = None;
+            
+                CommandEvent::Terminated(payload) => {
+                   // 1. 打印详细日志：包含进程的退出原因（如果是 Ok 则正常退出，否则包含退出码）
+                   log::warn!("[Trojan] 进程事件: Terminated, 退出信息: {:?}", payload);
 
-                    let _ = app_handle_clone.emit("trojan-status", "stopped");
-                    break;
+                   // 2. 尝试获取锁，并在日志中打印清空前的状态
+                   let mut lock = state_inner.child.lock().unwrap();
+                   let mut name_lock = state_inner.current_config_name.lock().unwrap();
+
+                   log::info!(
+                       "[Trojan] 清理状态前: has_child={}, current_name={:?}",
+                       lock.is_some(),
+                       *name_lock
+                   );
+
+                   // 3. 执行清理
+                   *lock = None;
+                   *name_lock = None;
+
+                   let _ = app_handle_clone.emit("trojan-status", "stopped");
+                   break;
                 }
                 _ => {}
             }
