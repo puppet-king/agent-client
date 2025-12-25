@@ -1,4 +1,4 @@
-package com.plugin.vpn-helper
+package com.plugin.vpn_helper
 
 import org.junit.Test
 

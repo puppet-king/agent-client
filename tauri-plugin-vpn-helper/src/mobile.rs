@@ -15,7 +15,7 @@ pub fn init<R: Runtime, C: DeserializeOwned>(
   api: PluginApi<R, C>,
 ) -> crate::Result<VpnHelper<R>> {
   #[cfg(target_os = "android")]
-  let handle = api.register_android_plugin("com.plugin.vpn-helper", "ExamplePlugin")?;
+  let handle = api.register_android_plugin("com.plugin.vpn_helper", "VpnHelperPlugin")?;
   #[cfg(target_os = "ios")]
   let handle = api.register_ios_plugin(init_plugin_vpn_helper)?;
   Ok(VpnHelper(handle))
@@ -30,5 +30,14 @@ impl<R: Runtime> VpnHelper<R> {
       .0
       .run_mobile_plugin("ping", payload)
       .map_err(Into::into)
+  }
+
+  pub fn start_vpn(&self, payload: StartVpnRequest) -> crate::Result<StartVpnResponse> {
+    self.0.run_mobile_plugin("start_vpn", payload).map_err(Into::into)
+  }
+
+  pub fn stop_vpn(&self) -> crate::Result<StopVpnResponse> {
+    // 即使不需要传参，通常也会传一个空的 {}
+    self.0.run_mobile_plugin("stop_vpn",()).map_err(Into::into)
   }
 }

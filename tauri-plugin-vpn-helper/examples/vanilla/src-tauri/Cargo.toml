@@ -20,4 +20,3 @@ tauri-build = { version = "2.5.3", default-features = false }
 [dependencies]
 tauri = { version = "2.9.5" }
 tauri-plugin-vpn-helper = { path = "../../../" }
-

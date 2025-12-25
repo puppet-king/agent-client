@@ -21,4 +21,19 @@ forwardConsole("info", info)
 forwardConsole("warn", warn)
 forwardConsole("error", error)
 
+// import { invoke } from "@tauri-apps/api/core"
+
+// async function runVpnDebug() {
+//   try {
+//     console.log("正在调试 VPN 连接...")
+//     // 调用的是 Rust 里的 debug_vpn_connection
+//     const message = await invoke("debug_vpn_connection")
+//     console.log(message)
+//   } catch (error) {
+//     console.error("调试失败:", error)
+//   }
+// }
+//
+// void runVpnDebug()
+
 createApp(App).use(pinia).use(router).mount("#app")

@@ -16,6 +16,7 @@
     "fs:allow-app-write-recursive",
     "fs:allow-app-read-recursive",
     "fs:scope-app",
+    "vpn-helper:default",
     {
       "identifier": "fs:allow-exists",
       "allow": [

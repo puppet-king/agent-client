@@ -5,4 +5,5 @@ dependencies {
   implementation(project(":tauri-plugin-dialog"))
   implementation(project(":tauri-plugin-fs"))
   implementation(project(":tauri-plugin-haptics"))
+  implementation(project(":tauri-plugin-vpn-helper"))
 }

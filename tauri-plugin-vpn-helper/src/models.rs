@@ -11,3 +11,18 @@ pub struct PingRequest {
 pub struct PingResponse {
   pub value: Option<String>,
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct StartVpnRequest {
+    pub config: String, // 对应 Kotlin 里的 invoke.getString("config")
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct StartVpnResponse {
+    pub status: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct StopVpnResponse {
+    pub status: String,
+}

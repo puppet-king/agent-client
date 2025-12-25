@@ -1,43 +1,76 @@
-use tauri::{AppHandle, Runtime};
-use crate::platform::MobileVpnProvider;
-use async_trait::async_trait;
+package com.plugin.vpn_helper
 
-#[cfg(target_os = "android")]
-pub mod android;
+import android.app.Activity
+import app.tauri.annotation.Command
+import app.tauri.annotation.InvokeArg
+import app.tauri.annotation.TauriPlugin
+import app.tauri.plugin.JSObject
+import app.tauri.plugin.Plugin
+import app.tauri.plugin.Invoke
+import android.content.Intent
+import android.net.VpnService
+import android.os.Build
 
-#[cfg(target_os = "ios")]
-pub mod ios;
-
-pub struct MobileProvider<R: Runtime> {
-    app: AppHandle<R>,
+@InvokeArg
+class PingArgs {
+  var value: String? = null
 }
 
-impl<R: Runtime> MobileProvider<R> {
-    pub fn new(app: AppHandle<R>) -> Self {
-        Self { app }
-    }
-}
+@TauriPlugin
+class VpnHelperPlugin(private val activity: Activity): Plugin(activity) {
+    private val implementation = VpnHelperImplementation()
 
-#[async_trait]
-impl<R: Runtime> MobileVpnProvider for MobileProvider<R> {
-    async fn start_vpn(&self) -> Result<i32, String> {
-        #[cfg(target_os = "android")]
-        {
-            // 这里以后编写调用 android.rs 的代码
-            return self.start_android_impl().await;
-        }
+    @Command
+    fun ping(invoke: Invoke) {
+        val args = invoke.parseArgs(PingArgs::class.java)
 
-        #[cfg(target_os = "ios")]
-        {
-            // 这里以后编写调用 ios.rs 的代码
-            return self.start_ios_impl().await;
-        }
-
-        #[cfg(not(any(target_os = "android", target_os = "ios")))]
-        Err("Not a mobile platform".to_string())
+        val ret = JSObject()
+        ret.put("value", implementation.pong(args.value ?: "default value :("))
+        invoke.resolve(ret)
     }
 
-    async fn stop_vpn(&self) -> Result<(), String> {
-        Ok(())
+    @Command
+    fun start_vpn(invoke: Invoke) {
+        val configJson = invoke.getArgs().getString("config") ?: ""
+
+        val intent = VpnService.prepare(activity)
+        if (intent != null) {
+            // 如果没有权限，启动系统授权窗口
+            activity.startActivityForResult(intent, 0)
+            invoke.reject("NEED_PERMISSION")
+            return
+        }
+
+        // 启动服务
+        val serviceIntent = Intent(activity, MyVpnService::class.java).apply {
+            putExtra("CONFIG", configJson)
+        }
+
+        try {
+             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                 activity.startForegroundService(serviceIntent)
+             } else {
+                 activity.startService(serviceIntent)
+             }
+
+             // 返回成功
+             val res = JSObject()
+             res.put("status", "success")
+             invoke.resolve(res)
+         } catch (e: Exception) {
+             // 处理可能的启动失败（如 Android 14+ 缺少前台服务类型权限）
+             invoke.reject("START_SERVICE_FAILED", e.message)
+         }
+    }
+
+    @Command
+    fun stop_vpn(invoke: Invoke) {
+        // 直接执行停止逻辑，不调用 invoke.parseArgs
+         val serviceIntent = Intent(activity, MyVpnService::class.java)
+         activity.stopService(serviceIntent)
+
+         val ret = JSObject()
+         ret.put("status", "stopped")
+         invoke.resolve(ret)
     }
 }
