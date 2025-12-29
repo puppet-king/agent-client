@@ -1,2 +1,2 @@
 #[cfg(desktop)]
-pub mod trojan; 
+pub mod trojan;

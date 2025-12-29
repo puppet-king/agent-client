@@ -5,12 +5,14 @@ import CreateEdit from "./pages/CreateEdit.vue"
 import Settings from "./pages/Settings.vue"
 import LogViewer from "./pages/LogViewer.vue"
 import { useConfStore } from "@/stores/userConf"
+import SingBoxDetail from "@/pages/SingBoxDetail.vue"
 
 export const router = createRouter({
   history: createWebHashHistory(),
   routes: [
     { path: "/", component: Home },
     { path: "/detail/:name", component: Detail },
+    { path: "/sing-box-detail/:name", component: SingBoxDetail },
     { path: "/create", component: CreateEdit },
     { path: "/edit/:name", component: CreateEdit },
     { path: "/settings", component: Settings },

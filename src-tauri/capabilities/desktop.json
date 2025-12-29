@@ -54,6 +54,17 @@
             }
           ],
           "sidecar": true
+        },
+        {
+          "name": "binaries/sing-box",
+          "args": [
+            "run",
+            "-c",
+            {
+              "validator": "\\S+"
+            }
+          ],
+          "sidecar": true
         }
       ]
     },
@@ -62,6 +73,10 @@
       "allow": [
         {
           "name": "binaries/trojan-go",
+          "sidecar": true
+        },
+        {
+          "name": "binaries/sing-box",
           "sidecar": true
         }
       ]

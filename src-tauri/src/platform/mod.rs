@@ -1,11 +1,10 @@
-use tauri::{Wry, App};
+use tauri::{App, Wry};
 
 #[cfg(mobile)]
 pub mod mobile;
 
 #[cfg(desktop)]
 pub mod desktop;
-
 
 // 构建插件
 pub fn build_plugins(builder: tauri::Builder<Wry>) -> tauri::Builder<Wry> {
@@ -32,30 +31,28 @@ pub fn handle_window_event(builder: tauri::Builder<Wry>) -> tauri::Builder<Wry> 
     }
 }
 
-
 pub fn handle_setup_event(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(desktop)]
     {
-         desktop::handle_setup_event(app)?;
+        desktop::handle_setup_event(app)?;
     }
 
     #[cfg(mobile)]
     {
-          mobile::handle_setup_event(app)?;
+        mobile::handle_setup_event(app)?;
     }
 
     Ok(())
 }
 
-
 pub fn get_handlers() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool {
     #[cfg(desktop)]
     {
-        desktop::get_handlers() 
+        desktop::get_handlers()
     }
 
     #[cfg(mobile)]
     {
-        mobile::get_handlers() 
+        mobile::get_handlers()
     }
 }

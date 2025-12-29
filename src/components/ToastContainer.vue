@@ -20,7 +20,7 @@
             :class="bgColor(t.type)"
           >
             <!-- 增加图标支持（可选，建议） -->
-            <span class="text-sm font-medium tracking-wide">{{
+            <span class="text-base font-medium tracking-wide">{{
               t.message
             }}</span>
             <ButtonWrapper

@@ -1,13 +1,11 @@
-use tauri::{Manager};
+use tauri::Manager;
 mod logger;
 mod platform;
 
-
-#[cfg(desktop)]
-pub mod tray;
 #[cfg(desktop)]
 pub mod engine;
-
+#[cfg(desktop)]
+pub mod tray;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -17,7 +15,8 @@ pub fn run() {
     // 根据平台加载插件
     builder = platform::build_plugins(builder)
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_fs::init());
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_http::init());
 
     // 根据平台监听窗口事件
     builder = platform::handle_window_event(builder);

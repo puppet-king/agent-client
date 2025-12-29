@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue"
 import { useRouter } from "vue-router"
-import { Plus, MoreVertical, FileText, PenTool, Inbox } from "lucide-vue-next"
+import {
+  Plus,
+  MoreVertical,
+  FileText,
+  PenTool,
+  Inbox,
+  CloudDownload,
+} from "lucide-vue-next"
 import UISwitch from "@/components/UISwitch.vue"
 import NavBar from "@/components/NavBar.vue"
 import ButtonWrapper from "@/components/ButtonWrapper.vue"
@@ -23,6 +30,7 @@ import {
 } from "@/utils/rustUtils"
 import type { TunnelConfig } from "@/typings/config.ts"
 import { haptic } from "@/utils/haptics.ts"
+import ImportRemoteModal from "@/components/ImportRemoteModal.vue"
 
 defineOptions({
   name: "PuppetHome",
@@ -31,8 +39,9 @@ defineOptions({
 const router = useRouter()
 const conf = useConfStore()
 const { index, enabledName } = storeToRefs(conf)
-const isMenuOpen = ref(false)
 let unlisten: (() => void) | null = null
+const isMenuOpen = ref(false)
+const isRemoteModalOpen = ref(false)
 
 onMounted(async () => {
   try {
@@ -76,7 +85,7 @@ onMounted(async () => {
 const handleTunnelClick = (name: string) => {
   haptic.impact("light")
   console.debug("jumPath", `/detail/${name}`)
-  router.push(`/detail/${name}`)
+  router.push(`/sing-box-detail/${name}`)
 }
 
 const handleCreateManual = () => {
@@ -156,6 +165,15 @@ const onConnect = async (name: string) => {
   } finally {
     isProcessing.value = false
   }
+}
+
+const openRemoteModal = () => {
+  isMenuOpen.value = false // 先关掉菜单
+
+  // 2. 等待一个小的时间片，让 DOM 和动画有缓冲空间
+  setTimeout(() => {
+    isRemoteModalOpen.value = true
+  }, 100)
 }
 </script>
 
@@ -270,7 +288,15 @@ const onConnect = async (name: string) => {
       @click="uploadConf"
     >
       <FileText :size="24" class="text-slate-500" />
-      <span class="text-lg font-medium">导入配置</span>
+      <span class="text-lg font-medium">导入本地配置</span>
+    </button>
+
+    <button
+      class="bg-dark-2 w-full flex items-center gap-4 px-6 py-4 hover:bg-slate-800 transition-colors"
+      @click="openRemoteModal"
+    >
+      <CloudDownload :size="24" class="text-slate-500" />
+      <span class="text-lg font-medium">导入远程配置</span>
     </button>
 
     <button
@@ -281,4 +307,7 @@ const onConnect = async (name: string) => {
       <span class="text-lg font-medium">手动创建</span>
     </button>
   </BottomSheet>
+
+  <!-- 导入远程资源 -->
+  <ImportRemoteModal v-model="isRemoteModalOpen"></ImportRemoteModal>
 </template>

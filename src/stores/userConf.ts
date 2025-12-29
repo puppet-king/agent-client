@@ -1,6 +1,6 @@
 import { ref } from "vue"
 import { defineStore } from "pinia"
-import type { TunnelConfig, TrojanStatus } from "@/typings/config.ts"
+import type { TrojanStatus } from "@/typings/config.ts"
 import { validateTunnelConfig } from "@/utils/validate"
 import { CONF_DIR, INDEX_FILE } from "@/config/constants"
 import {
@@ -12,6 +12,8 @@ import {
   writeTextFileToHome,
 } from "@/utils/rustUtils"
 import type { ActionResponse } from "@/typings/api"
+import type { SingBoxConfig } from "@/typings/singBoxConfig.ts"
+import JSON5 from "json5"
 
 interface TunnelIndexItem {
   name: string // 唯一性
@@ -79,15 +81,15 @@ export const useConfStore = defineStore("conf", () => {
     await loadIndex()
   }
 
-  const loadTunnel = async (name: string): Promise<TunnelConfig | null> => {
+  const loadTunnel = async (name: string): Promise<SingBoxConfig | null> => {
     const item = index.value.find((i) => i.name === name)
-    console.log("loadTunnel", name, "没有找到")
-    console.log("loadTunnel", index.value)
+    console.log("loadTunnel", name)
     if (!item) return null
     console.debug("loadTunnel path", item.path)
     try {
       const data = await readTextFileToHome(item.path)
-      return JSON.parse(data)
+      console.log("data", data)
+      return JSON5.parse(data)
     } catch (e) {
       console.error("loadTunnel", e)
       return null
@@ -96,7 +98,7 @@ export const useConfStore = defineStore("conf", () => {
 
   const saveTunnel = async (
     name: string,
-    config: TunnelConfig,
+    config: SingBoxConfig,
     isSafe: boolean = false,
   ) => {
     if (!isSafe) {
@@ -147,7 +149,7 @@ export const useConfStore = defineStore("conf", () => {
 
   const addTunnel = async (
     name: string,
-    config: TunnelConfig,
+    config: SingBoxConfig,
     isSafe: boolean = false,
   ): Promise<ActionResponse> => {
     const existing = index.value.find((i) => i.name === name)
@@ -171,7 +173,7 @@ export const useConfStore = defineStore("conf", () => {
 
   const updateTunnel = async (
     name: string,
-    config: TunnelConfig,
+    config: SingBoxConfig,
   ): Promise<ActionResponse> => {
     try {
       await deleteTunnel(name)

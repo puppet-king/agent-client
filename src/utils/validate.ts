@@ -1,9 +1,8 @@
-import { resourceDir, join } from "@tauri-apps/api/path"
+import { TunnelConfigSchema, type ValidateResult } from "@/typings/config.ts"
 import {
-  TunnelConfigSchema,
-  type ValidateResult,
-  type TunnelConfig,
-} from "@/typings/config.ts"
+  type SingBoxConfig,
+  SingBoxConfigSchema,
+} from "@/typings/singBoxConfig.ts"
 
 export function validateTunnelConfig(config: unknown): ValidateResult {
   const result = TunnelConfigSchema.safeParse(config)
@@ -44,29 +43,64 @@ export function isValidDomain(value: string): boolean {
 }
 
 export async function replaceRouterConfig(
-  config: TunnelConfig,
-): Promise<TunnelConfig> {
-  const dir = await resourceDir()
-  console.log("dir", dir)
-
-  if (config.router && config.router.enabled) {
-    config.router.bypass = [
-      "geoip:cn",
-      "geoip:private",
-      "geosite:cn",
-      "geosite:private",
-    ]
-
-    config.router.block = ["geosite:category-ads"]
-    config.router.proxy = ["geosite:geolocation-!cn"]
-    config.router.default_policy = "proxy"
-    config.router.geoip = await join(
-      dir,
-      "resources",
-      "geoip-only-cn-private.dat",
-    )
-    config.router.geosite = await join(dir, "resources", "geosite.dat")
-  }
+  config: SingBoxConfig,
+): Promise<SingBoxConfig> {
+  // 不用替换读取远程资源
+  // const dir = await resourceDir()
+  // console.log("dir", dir)
+  //
+  // if (config.router && config.router.enabled) {
+  //   config.router.bypass = [
+  //     "geoip:cn",
+  //     "geoip:private",
+  //     "geosite:cn",
+  //     "geosite:private",
+  //   ]
+  //
+  //   config.router.block = ["geosite:category-ads"]
+  //   config.router.proxy = ["geosite:geolocation-!cn"]
+  //   config.router.default_policy = "proxy"
+  //   config.router.geoip = await join(
+  //     dir,
+  //     "resources",
+  //     "geoip-only-cn-private.dat",
+  //   )
+  //   config.router.geosite = await join(dir, "resources", "geosite.dat")
+  // }
 
   return config
+}
+
+/**
+ * 校验 Sing-box 配置文件格式
+ * @param config 从 JSON.parse 或 JSON5.parse 得到的数据
+ */
+export function validateSingBoxConfig(config: unknown): ValidateResult {
+  // 使用新的 SingBoxConfigSchema 进行安全解析
+  const result = SingBoxConfigSchema.safeParse(config)
+
+  if (!result.success) {
+    // 1. 提取 Zod 产生的错误项
+    const messages = result.error.issues.map((issue) => {
+      // 2. 将路径数组 [ "inbounds", 0, "listen_port" ] 转换为字符串 "inbounds[0].listen_port"
+      const path = issue.path
+        .map((p) => (typeof p === "number" ? `[${p}]` : p))
+        .join(".")
+        .replace(/\.\[/g, "[") // 修复路径显示，如 outbounds.[0] -> outbounds[0]
+
+      return path ? `${path}: ${issue.message}` : issue.message
+    })
+
+    // 3. 返回符合 [string, ...string[]] 约束的错误对象
+    return {
+      valid: false,
+      errors: messages as [string, ...string[]],
+    }
+  }
+
+  // 校验成功
+  return {
+    valid: true,
+    errors: [],
+  }
 }

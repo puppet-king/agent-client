@@ -21,7 +21,7 @@ pub fn create_tray<R: Runtime>(app: &App<R>) -> tauri::Result<()> {
                 "show" => {
                     //  println!("show menu item was clicked");
                     if let Some(window) = app.get_webview_window("puppet4105") {
-                        let _ = window.unminimize();  // 取消最小化
+                        let _ = window.unminimize(); // 取消最小化
                         let _ = window.show(); // 展示
                         let _ = window.set_focus(); // 置顶
                     }
@@ -50,7 +50,7 @@ pub fn create_tray<R: Runtime>(app: &App<R>) -> tauri::Result<()> {
                 } => {
                     let app = tray.app_handle();
                     if let Some(window) = app.get_webview_window("puppet4105") {
-                        let _ = window.unminimize();  // 取消最小化
+                        let _ = window.unminimize(); // 取消最小化
                         let _ = window.show();
                         let _ = window.set_focus();
                     }

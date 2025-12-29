@@ -27,3 +27,6 @@ dist-ssr
 # 忽略所有 Android 自动生成的错误报告压缩包
 bugreport-*.zip
 bugreport-*.txt
+
+# 忽略 sing-box 生成的 db 缓存文件
+src-tauri/cache.db

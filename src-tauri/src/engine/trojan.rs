@@ -51,11 +51,11 @@ pub fn stop_trojan_internal(state: &TrojanState) -> Result<(), String> {
     };
 
     // 在锁之外执行 kill()，这样即使 kill 阻塞，也不会阻塞其他状态查询
-    if let Some(child) = maybe_child {
-        child.kill().map_err(|e| {
-            log::error!("无法杀掉进程: {}", e);
-            format!("无法杀掉进程: {}", e)
-        })?;
+    if let Some(mut child) = maybe_child {
+        // 优雅终止（等价于 Ctrl+C）
+        if let Err(e) = child.kill() {
+            log::error!("无法终止 sing-box: {}", e);
+        }
     }
 
     {
@@ -71,13 +71,28 @@ pub async fn run_trojan(
     config_path: String,
     config_name: String,
 ) -> Result<(), String> {
+    log::info!("config_path {}", config_path);
+
     // 读取配置文件
     let config_content =
         fs::read_to_string(&config_path).map_err(|e| format!("无法读取配置文件: {}", e))?;
 
-    // 解析端口 local_port
-    let config: TrojanPortConfig = serde_json::from_str(&config_content)
-        .map_err(|e| format!("解析配置文件端口失败: {}", e))?;
+    let v: serde_json::Value =
+        json5::from_str(&config_content).map_err(|e| format!("JSON5 解析失败: {}", e))?;
+
+    // 2. 从嵌套的 inbounds[0].listen_port 中提取端口
+    let extracted_port = v["inbounds"][0]["listen_port"]
+        .as_u64()
+        .ok_or_else(|| "无法从配置文件 inbounds[0].listen_port 提取端口".to_string())?
+        as u16;
+
+    // 3. 手动构造并赋值给您的 TrojanPortConfig 结构体
+    let config = TrojanPortConfig {
+        local_port: extracted_port,
+    };
+
+    // 4. 现在您可以像以前一样使用 config.local_port 了
+    log::info!("proxy info {}", config.local_port);
 
     // 先停止旧进程
     stop_trojan_internal(&state)?;
@@ -86,9 +101,9 @@ pub async fn run_trojan(
 
     // 启动 sidecar
     let (mut rx, child) = shell
-        .sidecar("trojan-go")
+        .sidecar("sing-box")
         .map_err(|e| format!("Sidecar 错误: {}", e))?
-        .args(["-config", &config_path])
+        .args(["run", "-c", &config_path])
         .spawn()
         .map_err(|e| format!("Spawn 错误: {}", e))?;
 
@@ -139,27 +154,27 @@ pub async fn run_trojan(
                         format!("[ERROR] {}", String::from_utf8_lossy(&line).trim()),
                     );
                 }
-            
+
                 CommandEvent::Terminated(payload) => {
-                   // 1. 打印详细日志：包含进程的退出原因（如果是 Ok 则正常退出，否则包含退出码）
-                   log::warn!("[Trojan] 进程事件: Terminated, 退出信息: {:?}", payload);
+                    // 1. 打印详细日志：包含进程的退出原因（如果是 Ok 则正常退出，否则包含退出码）
+                    log::warn!("[Trojan] 进程事件: Terminated, 退出信息: {:?}", payload);
 
-                   // 2. 尝试获取锁，并在日志中打印清空前的状态
-                   let mut lock = state_inner.child.lock().unwrap();
-                   let mut name_lock = state_inner.current_config_name.lock().unwrap();
+                    // 2. 尝试获取锁，并在日志中打印清空前的状态
+                    let mut lock = state_inner.child.lock().unwrap();
+                    let mut name_lock = state_inner.current_config_name.lock().unwrap();
 
-                   log::info!(
-                       "[Trojan] 清理状态前: has_child={}, current_name={:?}",
-                       lock.is_some(),
-                       *name_lock
-                   );
+                    log::info!(
+                        "[Trojan] 清理状态前: has_child={}, current_name={:?}",
+                        lock.is_some(),
+                        *name_lock
+                    );
 
-                   // 3. 执行清理
-                   *lock = None;
-                   *name_lock = None;
+                    // 3. 执行清理
+                    *lock = None;
+                    *name_lock = None;
 
-                   let _ = app_handle_clone.emit("trojan-status", "stopped");
-                   break;
+                    let _ = app_handle_clone.emit("trojan-status", "stopped");
+                    break;
                 }
                 _ => {}
             }
@@ -180,7 +195,7 @@ pub fn get_trojan_status(state: State<'_, TrojanState>) -> TrojanStatus {
     let child_lock = state.child.lock().unwrap();
     let name_lock = state.current_config_name.lock().unwrap();
 
-    // 实时从系统读取代理状态
+    //     // 实时从系统读取代理状态
     let current_proxy_enabled = Sysproxy::get_system_proxy()
         .map(|p| p.enable)
         .unwrap_or(false);

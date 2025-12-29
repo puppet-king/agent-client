@@ -1,12 +1,10 @@
-use tauri::{Builder, Wry, Manager, WindowEvent, App};
+use tauri::{App, Builder, Manager, WindowEvent, Wry};
 
-use crate::tray;
+use crate::engine::trojan;
 use crate::engine::trojan::TrojanState;
-use std::sync::Mutex;
-use crate::engine::trojan; 
 use crate::logger;
-
-
+use crate::tray;
+use std::sync::Mutex;
 
 pub fn build_plugins(builder: Builder<Wry>) -> Builder<Wry> {
     builder
@@ -50,9 +48,8 @@ pub fn handle_window_event(builder: Builder<Wry>) -> Builder<Wry> {
     })
 }
 
-
 pub fn handle_setup_event(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
- let salt_path = app
+    let salt_path = app
         .path()
         .app_local_data_dir()
         .expect("could not resolve app local data path")
@@ -73,7 +70,6 @@ pub fn handle_setup_event(app: &mut App) -> Result<(), Box<dyn std::error::Error
 
     Ok(())
 }
-
 
 pub fn get_handlers() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool {
     tauri::generate_handler![

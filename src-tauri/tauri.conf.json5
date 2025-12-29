@@ -42,7 +42,8 @@
     ],
     "externalBin": [
       // TODO: 添加trojan-go二进制文件
-      "binaries/trojan-go"
+      // "binaries/trojan-go",
+      "binaries/sing-box",
     ],
     "resources": {
       "resources/*": "resources/"
