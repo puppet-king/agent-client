@@ -3,6 +3,8 @@ import {
   type SingBoxConfig,
   SingBoxConfigSchema,
 } from "@/typings/singBoxConfig.ts"
+import { homeDir, join, resourceDir } from "@tauri-apps/api/path"
+import { CACHE_DB_PATH } from "@/config/constants.ts"
 
 export function validateTunnelConfig(config: unknown): ValidateResult {
   const result = TunnelConfigSchema.safeParse(config)
@@ -45,28 +47,40 @@ export function isValidDomain(value: string): boolean {
 export async function replaceRouterConfig(
   config: SingBoxConfig,
 ): Promise<SingBoxConfig> {
-  // 不用替换读取远程资源
-  // const dir = await resourceDir()
-  // console.log("dir", dir)
-  //
-  // if (config.router && config.router.enabled) {
-  //   config.router.bypass = [
-  //     "geoip:cn",
-  //     "geoip:private",
-  //     "geosite:cn",
-  //     "geosite:private",
-  //   ]
-  //
-  //   config.router.block = ["geosite:category-ads"]
-  //   config.router.proxy = ["geosite:geolocation-!cn"]
-  //   config.router.default_policy = "proxy"
-  //   config.router.geoip = await join(
-  //     dir,
-  //     "resources",
-  //     "geoip-only-cn-private.dat",
-  //   )
-  //   config.router.geosite = await join(dir, "resources", "geosite.dat")
-  // }
+  const dir = await homeDir()
+  const resDir = await resourceDir()
+  console.log("dir", dir)
+
+  if (
+    config.experimental &&
+    config.experimental.cache_file &&
+    config.experimental.cache_file.enabled
+  ) {
+    config.experimental.cache_file.path = await join(dir, CACHE_DB_PATH)
+  }
+
+  const targetTags = [
+    "geosite-geolocation-!cn",
+    "geoip-cn",
+    "geosite-geolocation-cn",
+  ]
+
+  if (config.route?.rule_set) {
+    config.route.rule_set = await Promise.all(
+      config.route.rule_set.map(async (rs) => {
+        // 判断 tag 是否为目标之一
+        if (targetTags.includes(rs.tag)) {
+          return {
+            tag: rs.tag,
+            type: "local",
+            format: "binary",
+            path: await join(resDir, "resources", `${rs.tag}.srs`),
+          }
+        }
+        return rs
+      }),
+    )
+  }
 
   return config
 }

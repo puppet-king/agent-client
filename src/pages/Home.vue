@@ -125,7 +125,27 @@ const uploadConf = async () => {
       toast.error(errors[0], 3000)
     }
   } catch (e) {
-    console.info(e)
+    if (e instanceof Error) {
+      const errorMessage = e?.message || String(e)
+      if (errorMessage.includes("No file selected")) {
+        // 情况 1: 用户根本没选文件就关闭了对话框或点击了取消
+        toast.error("操作已取消：尚未选择任何文件", 3000)
+      } else if (
+        errorMessage.includes("JSON5: invalid end of input") ||
+        errorMessage.includes("Unexpected token")
+      ) {
+        // 情况 2: 文件内容不全、格式错误（如末尾少了个括号）
+        toast.error("不合规的 JSON 类型文件（格式不完整）", 3000)
+      } else {
+        // 情况 3: 其他未知错误
+        toast.error("解析失败：请检查文件编码或格式", 3000)
+      }
+    } else {
+      // 处理非 Error 对象的异常（极少见）
+      console.error("未知错误", e)
+    }
+
+    console.error(e)
   }
 }
 

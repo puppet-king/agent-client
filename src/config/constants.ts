@@ -22,5 +22,5 @@ export const CONF_DIR = `${prefix}conf`
 export const USER_DIR = isDesktop() ? ".agent1215-client" : "data"
 export const CONFIG_PATH = `${prefix}config.json`
 export const INDEX_FILE = `${prefix}index.json`
-
+export const CACHE_DB_PATH = `${prefix}cache.db`
 export const LOG_FILE = `app.log`

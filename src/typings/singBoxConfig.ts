@@ -112,13 +112,22 @@ export const SingBoxConfigSchema = z.object({
   route: z.object({
     rules: z.array(z.any()),
     rule_set: z.array(
-      z.object({
-        type: z.literal("remote"),
-        tag: z.string(),
-        format: z.literal("binary"),
-        url: z.string().url(),
-        download_detour: z.string(),
-      }),
+      z.union([
+        z.object({
+          type: z.literal("remote"),
+          tag: z.string(),
+          format: z.literal("binary"),
+          url: z.string().url(),
+          download_detour: z.string().optional(),
+        }),
+
+        z.object({
+          type: z.literal("local"),
+          tag: z.string(),
+          format: z.literal("binary"),
+          path: z.string(),
+        }),
+      ]),
     ),
     final: z.string(),
     auto_detect_interface: z.boolean(),
@@ -128,6 +137,7 @@ export const SingBoxConfigSchema = z.object({
       cache_file: z.object({
         enabled: z.boolean(),
         store_rdrc: z.boolean(),
+        path: z.string().optional(), // 默认是 cache.db
       }),
       clash_api: z
         .object({

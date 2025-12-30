@@ -12,6 +12,8 @@ import { validateSingBoxConfig } from "@/utils/validate.ts"
 import { useRoute, useRouter } from "vue-router"
 import { useConfStore } from "@/stores/userConf.ts"
 import UISwitch from "@/components/UISwitch.vue"
+import { homeDir, join } from "@tauri-apps/api/path"
+import { CACHE_DB_PATH } from "@/config/constants.ts"
 
 const router = useRouter()
 const route = useRoute()
@@ -21,6 +23,8 @@ const confStore = useConfStore()
 const isEdit = computed(() => !!route.params.name)
 const configName = ref("") // 对应文件名
 const showPassword = ref(false) // 控制是否显示明文
+
+const path = await join(await homeDir(), CACHE_DB_PATH)
 
 // 初始化一个符合 TunnelConfig 结构的空表单
 const form = reactive<SingBoxConfig>({
@@ -134,6 +138,7 @@ const form = reactive<SingBoxConfig>({
   experimental: {
     cache_file: {
       enabled: true,
+      path: path,
       store_rdrc: true,
     },
     clash_api: {
