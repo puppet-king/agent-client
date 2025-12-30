@@ -12,13 +12,9 @@ import {
   writeTextFileToHome,
 } from "@/utils/rustUtils"
 import type { ActionResponse } from "@/typings/api"
-import type { SingBoxConfig } from "@/typings/singBoxConfig.ts"
+import type { SingBoxConfig, TunnelIndexItem } from "@/typings/singBoxConfig.ts"
 import JSON5 from "json5"
-
-interface TunnelIndexItem {
-  name: string // 唯一性
-  path: string // $APPDATA 相对路径
-}
+import { getEnabledProtocols } from "@/utils/configParser.ts"
 
 export const useConfStore = defineStore("conf", () => {
   const index = ref<TunnelIndexItem[]>([])
@@ -107,12 +103,16 @@ export const useConfStore = defineStore("conf", () => {
 
     const fileName = `${name}.json`
     const filePath = `${CONF_DIR}/${fileName}`
-    const contents = JSON.stringify(config)
+    const contents = JSON.stringify(config, null, 2)
     await writeTextFileToHome(filePath, contents)
 
     const existing = index.value.find((i) => i.name === name)
     if (!existing) {
-      index.value.push({ name: name, path: filePath })
+      index.value.push({
+        name: name,
+        path: filePath,
+        type: getEnabledProtocols(config),
+      })
     }
 
     await saveIndex()

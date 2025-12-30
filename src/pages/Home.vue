@@ -5,7 +5,7 @@ import {
   Plus,
   MoreVertical,
   FileText,
-  PenTool,
+  // PenTool,
   Inbox,
   CloudDownload,
 } from "lucide-vue-next"
@@ -14,7 +14,7 @@ import NavBar from "@/components/NavBar.vue"
 import ButtonWrapper from "@/components/ButtonWrapper.vue"
 import BottomSheet from "@/components/BottomSheet.vue"
 import { readFile } from "@/utils/fileReader"
-import { replaceRouterConfig, validateTunnelConfig } from "@/utils/validate"
+import { replaceRouterConfig, validateSingBoxConfig } from "@/utils/validate"
 import { toast } from "@/composables/useToast"
 import { useConfStore } from "@/stores/userConf"
 import { storeToRefs } from "pinia"
@@ -28,9 +28,9 @@ import {
   parseTrojanGoLog,
   isDesktop,
 } from "@/utils/rustUtils"
-import type { TunnelConfig } from "@/typings/config.ts"
 import { haptic } from "@/utils/haptics.ts"
 import ImportRemoteModal from "@/components/ImportRemoteModal.vue"
+import type { SingBoxConfig } from "@/typings/singBoxConfig.ts"
 
 defineOptions({
   name: "PuppetHome",
@@ -45,6 +45,8 @@ const isRemoteModalOpen = ref(false)
 
 onMounted(async () => {
   try {
+    window.addEventListener("keydown", handleEsc)
+
     if (unlisten) {
       unlisten()
       unlisten = null
@@ -95,6 +97,8 @@ const handleCreateManual = () => {
 
 // 组件卸载时取消监听
 onUnmounted(() => {
+  window.removeEventListener("keydown", handleEsc)
+
   if (unlisten) {
     unlisten()
     unlisten = null
@@ -111,11 +115,11 @@ const uploadConf = async () => {
       returnPath: true,
     })
 
-    const ext = isDesktop() ? "json" : ""
+    const ext = isDesktop() ? ".json" : ""
     const name = await basename(data.path, ext)
-    const { valid, errors } = validateTunnelConfig(data.content)
+    const { valid, errors } = validateSingBoxConfig(data.content)
     if (valid) {
-      const content = await replaceRouterConfig(data.content as TunnelConfig)
+      const content = await replaceRouterConfig(data.content as SingBoxConfig)
       const result = await conf.addTunnel(name, content, true)
       if (!result.success) {
         toast.error(result.message ?? "添加失败", 3000)
@@ -175,6 +179,16 @@ const openRemoteModal = () => {
     isRemoteModalOpen.value = true
   }, 100)
 }
+
+const handleEsc = (e: KeyboardEvent) => {
+  if (e.key !== "Escape") return
+
+  if (isRemoteModalOpen.value) {
+    isRemoteModalOpen.value = false
+  } else if (isMenuOpen.value) {
+    isMenuOpen.value = false
+  }
+}
 </script>
 
 <template>
@@ -212,7 +226,7 @@ const openRemoteModal = () => {
           <span
             class="text-[10px] text-slate-500 font-mono uppercase tracking-wider"
           >
-            Trojan-Go • Client Mode
+            SingBox • Client Mode
           </span>
         </div>
 
@@ -274,7 +288,7 @@ const openRemoteModal = () => {
   <!-- FAB -->
   <div class="absolute bottom-6 right-6 z-20">
     <button
-      class="bg-primary p-4 rounded-xl shadow-lg transition-all active:scale-95"
+      class="bg-primary p-4 rounded-xl shadow-lg transition-all active:scale-95 cursor-pointer"
       @click="isMenuOpen = true"
     >
       <Plus :size="28" />
@@ -284,7 +298,7 @@ const openRemoteModal = () => {
   <!-- Bottom Sheet Backdrop -->
   <BottomSheet v-model="isMenuOpen">
     <button
-      class="bg-dark-2 w-full flex items-center gap-4 px-6 py-4 hover:bg-slate-800"
+      class="bg-dark-2 w-full flex items-center gap-4 px-6 py-4 hover:bg-slate-800 cursor-pointer"
       @click="uploadConf"
     >
       <FileText :size="24" class="text-slate-500" />
@@ -292,20 +306,20 @@ const openRemoteModal = () => {
     </button>
 
     <button
-      class="bg-dark-2 w-full flex items-center gap-4 px-6 py-4 hover:bg-slate-800 transition-colors"
+      class="bg-dark-2 w-full flex items-center gap-4 px-6 py-4 hover:bg-slate-800 transition-colors cursor-pointer"
       @click="openRemoteModal"
     >
       <CloudDownload :size="24" class="text-slate-500" />
       <span class="text-lg font-medium">导入远程配置</span>
     </button>
 
-    <button
-      class="bg-dark-2 w-full flex items-center gap-4 px-6 py-4 hover:bg-slate-800"
-      @click="handleCreateManual"
-    >
-      <PenTool :size="24" class="text-slate-500" />
-      <span class="text-lg font-medium">手动创建</span>
-    </button>
+    <!--    <button-->
+    <!--      class="bg-dark-2 w-full flex items-center gap-4 px-6 py-4 hover:bg-slate-800 cursor-pointer"-->
+    <!--      @click="handleCreateManual"-->
+    <!--    >-->
+    <!--      <PenTool :size="24" class="text-slate-500" />-->
+    <!--      <span class="text-lg font-medium">手动创建</span>-->
+    <!--    </button>-->
   </BottomSheet>
 
   <!-- 导入远程资源 -->

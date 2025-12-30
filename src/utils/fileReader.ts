@@ -1,5 +1,6 @@
 import { open } from "@tauri-apps/plugin-dialog"
 import { readTextFile } from "@tauri-apps/plugin-fs"
+import JSON5 from "json5"
 
 export type FileReaderOptions = {
   multiple?: boolean
@@ -51,7 +52,7 @@ export async function readFile<T>(
     try {
       const contentRaw = await readTextFile(path)
       const content = json
-        ? (JSON.parse(contentRaw) as T)
+        ? (JSON5.parse(contentRaw) as T)
         : (contentRaw as unknown as T)
 
       // 如果需要返回路径，封装成对象

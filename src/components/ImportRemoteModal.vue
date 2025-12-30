@@ -1,18 +1,14 @@
 <script setup lang="ts">
 import { ref, reactive } from "vue"
 import { CloudDownload, Loader2, X } from "lucide-vue-next"
-import BottomSheet from "./BottomSheet.vue" // 确保引入你的基础 BottomSheet
+import BottomSheet from "./BottomSheet.vue"
 import { fetch } from "@tauri-apps/plugin-http"
 import JSON5 from "json5"
 import { toast } from "@/composables/useToast.ts"
-import {
-  replaceRouterConfig,
-  validateSingBoxConfig,
-  validateTunnelConfig,
-} from "@/utils/validate.ts"
-import type { TunnelConfig } from "@/typings/config.ts"
+import { replaceRouterConfig, validateSingBoxConfig } from "@/utils/validate.ts"
 import { useConfStore } from "@/stores/userConf.ts"
 import type { SingBoxConfig } from "@/typings/singBoxConfig.ts"
+import ButtonWrapper from "@/components/ButtonWrapper.vue"
 
 defineProps<{
   modelValue: boolean
@@ -24,8 +20,10 @@ const isDownloading = ref(false)
 const urlError = ref("")
 
 const form = reactive({
-  name: "cc",
-  url: "https://jp.juqingsong.cn/conf.json",
+  // name: "cc",
+  // url: "https://jp.juqingsong.cn/conf.json",
+  name: "",
+  url: "",
 })
 
 // URL 校验逻辑
@@ -113,12 +111,9 @@ const close = () => {
           </div>
           <h3 class="text-lg font-bold tracking-tight">导入远程配置</h3>
         </div>
-        <button
-          class="p-1 hover:bg-white/5 rounded-full transition-colors"
-          @click="close"
-        >
+        <ButtonWrapper @click="close">
           <X :size="20" class="text-slate-500" />
-        </button>
+        </ButtonWrapper>
       </div>
 
       <!-- 表单区域 -->

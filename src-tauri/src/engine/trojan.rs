@@ -51,7 +51,7 @@ pub fn stop_trojan_internal(state: &TrojanState) -> Result<(), String> {
     };
 
     // 在锁之外执行 kill()，这样即使 kill 阻塞，也不会阻塞其他状态查询
-    if let Some(mut child) = maybe_child {
+    if let Some(child) = maybe_child {
         // 优雅终止（等价于 Ctrl+C）
         if let Err(e) = child.kill() {
             log::error!("无法终止 sing-box: {}", e);
@@ -142,17 +142,20 @@ pub async fn run_trojan(
                 CommandEvent::Stdout(line) => {
                     let raw_line = String::from_utf8_lossy(&line);
                     let trimmed_line = raw_line.trim();
-
                     log::debug!("{}", trimmed_line);
-                    if trimmed_line.contains("[FATAL]") {
+                    if trimmed_line.contains("FATAL") {
                         let _ = app_handle_clone.emit("trojan-log", trimmed_line);
                     }
                 }
                 CommandEvent::Stderr(line) => {
-                    let _ = app_handle_clone.emit(
-                        "trojan-log",
-                        format!("[ERROR] {}", String::from_utf8_lossy(&line).trim()),
-                    );
+                    let raw_line = String::from_utf8_lossy(&line);
+                    let trimmed_line = raw_line.trim();
+                    log::info!("{}", trimmed_line);
+                    if trimmed_line.contains("FATAL") {
+                        let _ = app_handle_clone.emit("trojan-log", format!("[ERROR] {}", trimmed_line));
+                    } else if trimmed_line.contains("WARN") {
+                        let _ = app_handle_clone.emit("trojan-log", format!("[WARN] {}", trimmed_line));
+                    }
                 }
 
                 CommandEvent::Terminated(payload) => {
