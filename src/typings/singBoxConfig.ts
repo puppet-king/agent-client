@@ -42,7 +42,7 @@ const MultiplexSchema = z
   .optional()
 
 // --- Shadowsocks 出站定义 ---
-const ShadowsocksOutbound = z.object({
+const ShadowsocksOutboundSchema = z.object({
   type: z.literal("shadowsocks"),
   tag: z.string(),
   server: AddressSchema,
@@ -53,7 +53,7 @@ const ShadowsocksOutbound = z.object({
 })
 
 // --- Trojan 出站定义 ---
-const TrojanOutbound = z.object({
+const TrojanOutboundSchema = z.object({
   type: z.literal("trojan"),
   tag: z.string(),
   server: AddressSchema,
@@ -95,8 +95,8 @@ export const SingBoxConfigSchema = z.object({
   outbounds: z
     .array(
       z.union([
-        ShadowsocksOutbound,
-        TrojanOutbound,
+        ShadowsocksOutboundSchema,
+        TrojanOutboundSchema,
         z.object({ type: z.literal("direct"), tag: z.string() }),
       ]),
     )
@@ -139,6 +139,7 @@ export const SingBoxConfigSchema = z.object({
 })
 
 export type SingBoxConfig = z.infer<typeof SingBoxConfigSchema>
+export type ShadowsocksOutbound = z.infer<typeof ShadowsocksOutboundSchema>
 
 // 保持原有的状态和结果类型定义
 export type ValidateResult =

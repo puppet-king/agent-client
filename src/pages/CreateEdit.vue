@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { ref, onMounted, reactive, computed } from "vue"
-import { useRouter, useRoute } from "vue-router"
-import { useConfStore } from "@/stores/userConf"
-import { validateTunnelConfig } from "@/utils/validate" // 之前封装的 Zod 校验
-import { Save, Globe, Monitor, Lock, Eye, EyeOff } from "lucide-vue-next"
-import NavBar from "@/components/NavBar.vue"
-import UISwitch from "@/components/UISwitch.vue"
-import type { TunnelConfig } from "@/typings/config"
 import ButtonWrapper from "@/components/ButtonWrapper.vue"
+import NavBar from "@/components/NavBar.vue"
+import { Save, Globe, Monitor, Eye, EyeOff, Layers, Zap } from "lucide-vue-next"
 import { toast } from "@/composables/useToast.ts"
+import {
+  type ShadowsocksOutbound,
+  type SingBoxConfig,
+} from "@/typings/singBoxConfig.ts"
+import { validateSingBoxConfig } from "@/utils/validate.ts"
+import { useRoute, useRouter } from "vue-router"
+import { useConfStore } from "@/stores/userConf.ts"
+import UISwitch from "@/components/UISwitch.vue"
 
-// 路由与 Store 状态
 const router = useRouter()
 const route = useRoute()
 const confStore = useConfStore()
@@ -21,32 +23,125 @@ const configName = ref("") // 对应文件名
 const showPassword = ref(false) // 控制是否显示明文
 
 // 初始化一个符合 TunnelConfig 结构的空表单
-const form = reactive<TunnelConfig>({
-  run_type: "client",
-  local_addr: "127.0.0.1",
-  local_port: 4099,
-  remote_addr: "",
-  remote_port: 443,
-  password: [""],
-  ssl: {
-    enabled: true,
-    sni: "",
-    verify: true,
-    verify_hostname: true,
+const form = reactive<SingBoxConfig>({
+  log: {
+    level: "error",
+    timestamp: true,
   },
-  mux: { enabled: true },
-  router: {
-    enabled: true,
-    default_policy: "proxy",
-    geoip: "./geoip-only-cn-private.dat",
-    geosite: "./geosite.dat",
-    bypass: ["geoip:cn", "geoip:private", "geosite:cn", "geosite:private"],
-    block: ["geosite:category-ads"],
-    proxy: ["geosite:geolocation-!cn"],
+  dns: {
+    servers: [
+      { tag: "google", address: "tls://8.8.8.8" },
+      { tag: "dns_block", address: "rcode://refused" },
+      { tag: "local", address: "223.5.5.5", detour: "direct" },
+    ],
+    rules: [
+      { domain: ["static.juqingsong.cn"], server: "local" },
+      { protocol: "dns", server: "local" },
+      { rule_set: "geosite-geolocation-cn", server: "local" },
+      { rule_set: "geosite-geolocation-!cn", server: "google" },
+    ],
+    final: "local",
+    strategy: "prefer_ipv4",
+  },
+  inbounds: [
+    {
+      type: "mixed",
+      tag: "mixed-in",
+      listen: "127.0.0.1",
+      listen_port: 10808,
+      sniff: true,
+      sniff_override_destination: true,
+    },
+  ],
+  outbounds: [
+    {
+      type: "shadowsocks",
+      tag: "proxy",
+      server: "", // 留空由用户在 UI 填入
+      server_port: 8080,
+      method: "2022-blake3-aes-128-gcm",
+      password: "",
+      multiplex: {
+        enabled: true,
+        protocol: "h2mux",
+        max_connections: 4,
+        min_streams: 4,
+      },
+    },
+    {
+      type: "direct",
+      tag: "direct",
+    },
+  ],
+  route: {
+    rules: [
+      { action: "sniff" },
+      {
+        type: "logical",
+        mode: "or",
+        rules: [{ protocol: "dns" }, { port: 53 }],
+        action: "hijack-dns",
+      },
+      { ip_is_private: true, outbound: "direct" },
+      {
+        type: "logical",
+        mode: "or",
+        rules: [
+          { port: 853 },
+          { network: "udp", port: 443 },
+          { protocol: "stun" },
+        ],
+        action: "reject",
+      },
+      { rule_set: "geosite-geolocation-cn", outbound: "direct" },
+      { rule_set: "geoip-cn", outbound: "direct" },
+      {
+        type: "logical",
+        mode: "and",
+        rules: [
+          { rule_set: "geosite-geolocation-!cn" },
+          { rule_set: "geoip-cn", invert: true },
+        ],
+        outbound: "proxy",
+      },
+    ],
+    rule_set: [
+      {
+        type: "remote",
+        tag: "geosite-geolocation-!cn",
+        format: "binary",
+        url: "https://static.juqingsong.cn/geosite-geolocation-!cn.srs",
+        download_detour: "direct",
+      },
+      {
+        type: "remote",
+        tag: "geoip-cn",
+        format: "binary",
+        url: "https://static.juqingsong.cn/geoip-cn.srs",
+        download_detour: "direct",
+      },
+      {
+        type: "remote",
+        tag: "geosite-geolocation-cn",
+        format: "binary",
+        url: "https://static.juqingsong.cn/geosite-geolocation-cn.srs",
+        download_detour: "direct",
+      },
+    ],
+    final: "proxy",
+    auto_detect_interface: true,
+  },
+  experimental: {
+    cache_file: {
+      enabled: true,
+      store_rdrc: true,
+    },
+    clash_api: {
+      default_mode: "Enhanced",
+    },
   },
 })
 
-// 3. 初始化加载数据
 onMounted(async () => {
   if (isEdit.value) {
     const nameParam = String(route.params.name || "")
@@ -55,24 +150,14 @@ onMounted(async () => {
     // 从 Store/后端 加载现有配置
     const data = await confStore.loadTunnel(nameParam)
     if (data) {
-      // 深度合并，确保默认值不被缺失的字段抹除
-      form.run_type = data.run_type ?? form.run_type
-      form.local_addr = data.local_addr ?? form.local_addr
-      form.local_port = data.local_port ?? form.local_port
-      form.remote_addr = data.remote_addr ?? form.remote_addr
-      form.remote_port = data.remote_port ?? form.remote_port
-      form.password = data.password ?? form.password
-
-      // 合并嵌套对象
-      if (data.ssl) {
-        form.ssl = { ...form.ssl, ...data.ssl }
-      }
-      if (data.mux) {
-        form.mux = { ...form.mux, ...data.mux }
-      }
-      if (data.router) {
-        form.router = { ...form.router, ...data.router }
-      }
+      Object.assign(form, {
+        ...form, // 默认值
+        ...data, // 加载的值
+        // 对特定的深层对象进行合并（可选，如果 data 结构很碎）
+        log: { ...form.log, ...data.log },
+        dns: { ...form.dns, ...data.dns },
+        route: { ...form.route, ...data.route },
+      })
     } else {
       console.error("未找到配置数据")
       await router.push("/")
@@ -89,7 +174,7 @@ const handleSave = async () => {
   }
 
   // Zod 格式校验
-  const check = validateTunnelConfig(form)
+  const check = validateSingBoxConfig(form)
   if (!check.valid) {
     toast.info(`配置格式错误:\n${check.errors[0]}`)
     return
@@ -113,6 +198,142 @@ const handleSave = async () => {
     console.error("系统错误: " + e)
   }
 }
+
+// 1. 快捷访问 proxy outbound
+const proxyNode = computed(() => {
+  return form.outbounds.find((o) => o.tag === "proxy") as ShadowsocksOutbound
+})
+
+// 2. 快捷访问 mixed inbound
+const mixedInbound = computed(() => {
+  return form.inbounds.find((o) => o.type === "mixed")!
+})
+
+// 3. 急速模式逻辑简化
+// 通过计算属性监听或控制 route 里的规则是否存在来实现
+const isFastMode = computed({
+  get: () => {
+    // 检查规则集中是否有 geosite-geolocation-cn
+    return form.route.rule_set.some((r) => r.tag === "geosite-geolocation-cn")
+  },
+  set: (val: boolean) => {
+    if (val) {
+      // 启用：添加对应的规则集和路由规则
+      enableFastModeRules()
+    } else {
+      // 禁用：清空相关规则
+      disableFastModeRules()
+    }
+  },
+})
+
+// 模拟开启急速模式：注入规则
+function enableFastModeRules() {
+  // 设置 DNS 规则
+  form.dns.rules = [
+    { rule_set: "geosite-geolocation-cn", server: "local" },
+    { rule_set: "geosite-geolocation-!cn", server: "google" },
+  ]
+
+  // 设置路由规则集
+  form.route.rule_set = [
+    {
+      type: "remote",
+      tag: "geosite-geolocation-!cn",
+      format: "binary",
+      url: "https://static.juqingsong.cn/geosite-geolocation-!cn.srs",
+      download_detour: "direct",
+    },
+    {
+      type: "remote",
+      tag: "geoip-cn",
+      format: "binary",
+      url: "https://static.juqingsong.cn/geoip-cn.srs",
+      download_detour: "direct",
+    },
+    {
+      type: "remote",
+      tag: "geosite-geolocation-cn",
+      format: "binary",
+      url: "https://static.juqingsong.cn/geosite-geolocation-cn.srs",
+      download_detour: "direct",
+    },
+  ]
+  // 设置路由规则
+  form.route.rules = [
+    { action: "sniff" },
+    {
+      type: "logical",
+      mode: "or",
+      rules: [{ protocol: "dns" }, { port: 53 }],
+      action: "hijack-dns",
+    },
+    { ip_is_private: true, outbound: "direct" },
+    {
+      type: "logical",
+      mode: "or",
+      rules: [
+        { port: 853 },
+        { network: "udp", port: 443 },
+        { protocol: "stun" },
+      ],
+      action: "reject",
+    },
+    { rule_set: "geosite-geolocation-cn", outbound: "direct" },
+    { rule_set: "geoip-cn", outbound: "direct" },
+    {
+      type: "logical",
+      mode: "and",
+      rules: [
+        { rule_set: "geosite-geolocation-!cn" },
+        { rule_set: "geoip-cn", invert: true },
+      ],
+      outbound: "proxy",
+    },
+  ]
+}
+
+function disableFastModeRules() {
+  form.dns.rules = []
+  form.route.rule_set = []
+  form.route.rules = [
+    { action: "sniff" },
+    {
+      type: "logical",
+      mode: "or",
+      rules: [{ protocol: "dns" }, { port: 53 }],
+      action: "hijack-dns",
+    },
+    { ip_is_private: true, outbound: "direct" },
+  ]
+}
+
+const multiplexEnabled = computed({
+  get: () => {
+    // 安全导航：不存在或 enabled 为 false 都视为关闭
+    return proxyNode.value.multiplex?.enabled ?? false
+  },
+  set: (val: boolean) => {
+    if (val) {
+      // 开启时：如果不存在 multiplex 对象，则立即初始化一个完整的默认结构
+      if (!proxyNode.value.multiplex) {
+        proxyNode.value.multiplex = {
+          enabled: true,
+          protocol: "h2mux",
+          max_connections: 4,
+          min_streams: 4,
+        }
+      } else {
+        proxyNode.value.multiplex.enabled = true
+      }
+    } else {
+      // 关闭时：如果对象存在，仅将 enabled 设为 false
+      if (proxyNode.value.multiplex) {
+        proxyNode.value.multiplex.enabled = false
+      }
+    }
+  },
+})
 </script>
 <template>
   <NavBar :title="configName ? '编辑配置' : '创建配置'" :show-back="true">
@@ -125,64 +346,62 @@ const handleSave = async () => {
 
   <!-- 主体表单区域 -->
   <main class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-6 pb-24">
-    <!-- 区块一：基础连接信息 -->
+    <!-- 区块一：代理服务器信息 (对应 outbounds 中的 proxy 节点) -->
     <section class="space-y-4">
       <div class="flex items-center gap-2 px-1 text-slate-400">
         <Globe :size="16" class="text-primary" />
         <span class="text-xs uppercase font-bold tracking-widest">
-          基础连接
+          代理服务器
         </span>
       </div>
 
       <div
         class="bg-dark-2 rounded-2xl border border-dark-3 p-5 space-y-4 shadow-sm"
       >
-        <!-- 配置名称 (仅创建时可改，或作为文件标识) -->
+        <!-- 配置文件名 -->
         <div class="space-y-1.5">
-          <label class="text-xs text-slate-500 ml-1">配置文件名称 (唯一)</label>
+          <label class="text-xs text-slate-500 ml-1">配置文件名称</label>
           <input
             v-model="configName"
             type="text"
-            placeholder="client"
-            class="w-full bg-dark-3 border border-dark-3 focus:border-primary/50 rounded-xl px-4 py-3 text-sm transition-all outline-none"
-            :class="isEdit ? 'disabled:cursor-not-allowed ' : ''"
+            placeholder="my-server"
+            class="w-full bg-dark-3 border border-dark-3 rounded-xl px-4 py-3 text-sm transition-all outline-none focus:border-primary/50"
             :disabled="isEdit"
           />
         </div>
 
+        <!-- 远程地址与端口 -->
         <div class="grid grid-cols-3 gap-3">
           <div class="col-span-2 space-y-1.5">
-            <label class="text-xs text-slate-500 ml-1">远程地址</label>
+            <label class="text-xs text-slate-500 ml-1">服务器地址</label>
             <input
-              v-model="form.remote_addr"
+              v-model="proxyNode.server"
               type="text"
-              placeholder="公网 IPv4 地址"
-              class="w-full bg-dark-3 border border-dark-3 rounded-xl px-4 py-3 text-sm font-mono outline-none focus:border-primary/50"
+              placeholder="8.8.8.8"
+              class="w-full bg-dark-3 border border-dark-3 rounded-xl px-4 py-3 text-sm font-mono outline-none"
             />
           </div>
           <div class="space-y-1.5">
             <label class="text-xs text-slate-500 ml-1">端口</label>
             <input
-              v-model.number="form.remote_port"
+              v-model.number="proxyNode.server_port"
               type="number"
-              placeholder="443"
-              class="w-full bg-dark-3 border border-dark-3 rounded-xl px-4 py-3 text-sm font-mono outline-none focus:border-primary/50"
+              class="w-full bg-dark-3 border border-dark-3 rounded-xl px-4 py-3 text-sm font-mono outline-none"
             />
           </div>
         </div>
 
+        <!-- 密码 -->
         <div class="space-y-1.5">
-          <label class="text-xs text-slate-500 ml-1">连接密码</label>
+          <label class="text-xs text-slate-500 ml-1">连接密码 (Password)</label>
           <div class="relative flex items-center">
             <input
-              v-model="form.password[0]"
+              v-model="proxyNode.password"
               :type="showPassword ? 'text' : 'password'"
-              placeholder=""
-              class="flex-1 bg-dark-3 border border-dark-3 rounded-xl px-4 py-3 text-sm font-mono outline-none focus:border-primary/50"
+              class="flex-1 bg-dark-3 border border-dark-3 rounded-xl px-4 py-3 text-sm font-mono outline-none"
             />
-
             <button
-              class="absolute right-3 p-1.5 rounded-lg cursor-pointe hover:bg-dark-2 text-slate-500 hover:text-slate-300 transition-colors"
+              class="absolute right-3 text-slate-500"
               @click="showPassword = !showPassword"
             >
               <component :is="showPassword ? Eye : EyeOff" :size="18" />
@@ -192,7 +411,7 @@ const handleSave = async () => {
       </div>
     </section>
 
-    <!-- 区块二：本地监听 -->
+    <!-- 区块二：本地入站 (对应 inbounds 中的 mixed 节点) -->
     <section class="space-y-4">
       <div class="flex items-center gap-2 px-1 text-slate-400">
         <Monitor :size="16" class="text-primary" />
@@ -205,18 +424,16 @@ const handleSave = async () => {
           <div class="space-y-1.5">
             <label class="text-xs text-slate-500 ml-1">监听地址</label>
             <input
-              v-model="form.local_addr"
+              v-model="mixedInbound.listen"
               type="text"
-              placeholder="127.0.0.1"
               class="w-full bg-dark-3 border border-dark-3 rounded-xl px-4 py-3 text-sm font-mono outline-none"
             />
           </div>
           <div class="space-y-1.5">
-            <label class="text-xs text-slate-500 ml-1">监听端口</label>
+            <label class="text-xs text-slate-500 ml-1">端口</label>
             <input
-              v-model.number="form.local_port"
+              v-model.number="mixedInbound.listen_port"
               type="number"
-              placeholder="5001"
               class="w-full bg-dark-3 border border-dark-3 rounded-xl px-4 py-3 text-sm font-mono outline-none"
             />
           </div>
@@ -224,91 +441,38 @@ const handleSave = async () => {
       </div>
     </section>
 
-    <!-- 区块三：高级功能开关 -->
-    <section class="grid grid-cols-1 gap-3">
-      <!-- SSL 卡片 -->
+    <!-- 区块三：高级功能 -->
+    <section class="space-y-3">
+      <!-- 多路复用 Multiplex -->
       <div class="bg-dark-2 rounded-2xl border border-dark-3 p-5 shadow-sm">
-        <div class="flex justify-between items-center mb-1">
-          <div class="flex items-center gap-2">
-            <div class="p-2 bg-green-500/10 rounded-lg text-green-500">
-              <Lock :size="18" />
+        <div class="flex justify-between items-center">
+          <div class="flex items-center gap-3">
+            <div class="p-2 bg-blue-500/10 rounded-lg text-blue-500">
+              <Layers :size="18" />
             </div>
             <div>
-              <div class="text-sm font-bold">SSL 加密</div>
-              <div class="text-[10px] text-slate-500 uppercase">
-                Secure Socket Layer
-              </div>
+              <div class="text-sm font-bold">多路复用 (Multiplex)</div>
+              <div class="text-[10px] text-slate-500">减少延迟 / 提高并发</div>
             </div>
           </div>
-
-          <UISwitch v-model:checked="form.ssl!.enabled" size="small" />
+          <UISwitch v-model:checked="multiplexEnabled" size="small" />
         </div>
-
-        <Transition name="fade-slide">
-          <div
-            v-if="form.ssl!.enabled"
-            class="space-y-4 pt-2 border-t border-white/5"
-          >
-            <div class="space-y-1.5">
-              <label class="text-xs text-slate-500 ml-1">SNI 域名 (必填)</label>
-              <input
-                v-model="form.ssl!.sni"
-                type="text"
-                placeholder="server.domain.com"
-                class="w-full bg-dark-3 border border-dark-3 rounded-xl px-4 py-3 text-sm font-mono outline-none"
-              />
-            </div>
-            <div class="flex gap-4">
-              <div
-                class="flex-1 flex items-center justify-between bg-dark-3/50 p-3 rounded-xl border border-white/5"
-              >
-                <span class="text-xs text-slate-400">证书验证</span>
-                <UISwitch
-                  :checked="form.ssl?.verify ?? true"
-                  size="small"
-                  @update:checked="
-                    (val) => {
-                      if (form.ssl) {
-                        form.ssl.verify = val
-                      }
-                    }
-                  "
-                />
-              </div>
-              <div
-                class="flex-1 flex items-center justify-between bg-dark-3/50 p-3 rounded-xl border border-white/5"
-              >
-                <span class="text-xs text-slate-400">域名校验</span>
-                <UISwitch
-                  :checked="form.ssl?.verify_hostname ?? true"
-                  size="small"
-                  @update:checked="
-                    (val) => {
-                      if (form.ssl) {
-                        form.ssl.verify_hostname = val
-                      }
-                    }
-                  "
-                />
-              </div>
-            </div>
-          </div>
-        </Transition>
       </div>
 
-      <!-- Mux & Router 简化卡片 -->
-      <div class="grid grid-cols-2 gap-3">
-        <div
-          class="bg-dark-2 rounded-2xl border border-dark-3 p-4 flex justify-between items-center"
-        >
-          <span class="text-sm font-medium">多路复用 Mux</span>
-          <UISwitch v-model:checked="form.mux!.enabled" size="small" />
-        </div>
-        <div
-          class="bg-dark-2 rounded-2xl border border-dark-3 p-4 flex justify-between items-center"
-        >
-          <span class="text-sm font-medium">急速模式</span>
-          <UISwitch v-model:checked="form.router!.enabled" size="small" />
+      <!-- 急速模式 (路由分流) -->
+      <div class="bg-dark-2 rounded-2xl border border-dark-3 p-5 shadow-sm">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center gap-3">
+            <div class="p-2 bg-orange-500/10 rounded-lg text-orange-500">
+              <Zap :size="18" />
+            </div>
+            <div>
+              <div class="text-sm font-bold">急速模式 (分流)</div>
+              <div class="text-[10px] text-slate-500">绕过中国大陆流量</div>
+            </div>
+          </div>
+          <!-- 这里使用一个独立的 Ref 或计算属性来简化控制 -->
+          <UISwitch v-model:checked="isFastMode" size="small" />
         </div>
       </div>
     </section>

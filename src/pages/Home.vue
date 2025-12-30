@@ -53,26 +53,18 @@ onMounted(async () => {
     }
 
     if (isDesktop()) {
+      console.log("[trojan-go] isDesktop")
       const unlistenFn = await listenTrojanLog((msg) => {
         const log = parseTrojanGoLog(msg)
+        console.log("[trojan-go]", log)
         if (log) {
           if (log.level === "FATAL") {
             const message = log.message ?? ""
             if (log.message) {
               // 如果是端口占用错误，可以再用正则提取端口
-              const portConflictRegex =
-                /listen (tcp|udp) 127\.0\.0\.1:(\d+): bind/i
-              const conflictMatch = message.match(portConflictRegex)
               void haptic.notify("error")
-              if (conflictMatch && conflictMatch[1] && conflictMatch[2]) {
-                toast.error(` ${conflictMatch[2]}  端口被占用`)
-                enabledName.value = ""
-                // console.error(
-                //   `[trojan-go] ${conflictMatch[1].toUpperCase()} port ${conflictMatch[2]} conflict`,
-                // )
-              } else {
-                toast.error(message)
-              }
+              toast.error(message, 3000)
+              enabledName.value = ""
             }
           }
         }

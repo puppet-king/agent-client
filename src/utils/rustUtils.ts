@@ -83,15 +83,24 @@ export async function listenTrojanLog(callback: (log: string) => void) {
  */
 export function parseTrojanGoLog(line: string) {
   // 匹配 [LEVEL] YYYY/MM/DD HH:MM:SS message
-  const regex = /^\[(\w+)\]\s+(\d{4}\/\d{2}\/\d{2}\s+\d{2}:\d{2}:\d{2})\s+(.*)$/
+  // eslint-disable-next-line no-control-regex
+  // const cleanLine = line.replace(/\x1b\[[0-9;]*[mK]/g, "")
+
+  // 2. 匹配标准格式: [级别] 消息内容
+  // ^\[        -> 以 [ 开头
+  // ([^\]]+)   -> 匹配第一个 ] 之前的所有字符，并捕获为 match[1] (级别)
+  // \]         -> 匹配 ]
+  // \s*        -> 匹配可选的空格
+  // (.*)$      -> 匹配剩余所有内容为 match[2] (消息)
+  const regex = /^\[([^\]]+)\]\s*(.*)$/
   const match = line.match(regex)
   if (match) {
     return {
-      level: match[1], // FATAL / INFO / etc.
-      timestamp: match[2], // 2025/12/15 19:16:03
-      message: match[3], // 剩余内容
+      level: match[1], // 例如: level ERROR / FATAL
+      message: match[2],
     }
   }
+
   return null
 }
 
