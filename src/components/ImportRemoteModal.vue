@@ -21,7 +21,7 @@ const urlError = ref("")
 
 const form = reactive({
   // name: "cc",
-  // url: "https://jp.juqingsong.cn/conf.json",
+  // url: "https://jp.juqingsong.cn/1.json",
   name: "",
   url: "",
 })
@@ -72,7 +72,13 @@ const handleSubmit = async () => {
     const { valid, errors } = validateSingBoxConfig(configData)
     if (valid) {
       const content = await replaceRouterConfig(configData as SingBoxConfig)
-      const result = await conf.addTunnel(form.name, content, true)
+      const result = await conf.addTunnel(
+        form.name,
+        content,
+        "remote",
+        form.url,
+        true,
+      )
       if (!result.success) {
         toast.error(result.message ?? "添加失败", 3000)
         return
@@ -88,7 +94,7 @@ const handleSubmit = async () => {
     emit("success")
     emit("update:modelValue", false)
   } catch (err) {
-    alert(`导入失败: ${err}`)
+    toast.error(`导入失败: ${err}`, 3000)
   } finally {
     isDownloading.value = false
   }

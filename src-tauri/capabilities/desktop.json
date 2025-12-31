@@ -62,7 +62,8 @@
             "-c",
             {
               "validator": "\\S+"
-            }
+            },
+            "--disable-color"
           ],
           "sidecar": true
         }

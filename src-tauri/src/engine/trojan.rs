@@ -107,7 +107,7 @@ pub async fn run_trojan(
     let (mut rx, child) = shell
         .sidecar("sing-box")
         .map_err(|e| format!("Sidecar 错误: {}", e))?
-        .args(["run", "-c", &config_path])
+        .args(["run", "-c", &config_path,  "--disable-color"])
         .spawn()
         .map_err(|e| format!("Spawn 错误: {}", e))?;
 

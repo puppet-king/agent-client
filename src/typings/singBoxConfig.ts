@@ -2,12 +2,27 @@ import { z } from "zod"
 import { isValidIP } from "@/utils/validate"
 
 export type Protocol = "shadowsocks" | "trojan"
+export type ResourceType = "local" | "remote"
 
-export interface TunnelIndexItem {
+interface BaseTunnelItem {
   name: string // 唯一性
   path: string // $APPDATA 相对路径
-  type: Protocol | Protocol[] // 使用的协议
+  protocol: Protocol | Protocol[]
+  lastTimestamp: number
 }
+
+// 本地配置：时间戳是可选的
+interface LocalTunnelItem extends BaseTunnelItem {
+  type: "local"
+}
+
+// 远程配置：时间戳是必填的（用于记录订阅更新时间）
+interface RemoteTunnelItem extends BaseTunnelItem {
+  type: "remote"
+  url: string
+}
+
+export type TunnelIndexItem = LocalTunnelItem | RemoteTunnelItem
 
 // 1. 定义入站 Schema (Mixed 模式)
 const InboundSchema = z.object({

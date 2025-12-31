@@ -31,6 +31,7 @@ import {
 import { haptic } from "@/utils/haptics.ts"
 import ImportRemoteModal from "@/components/ImportRemoteModal.vue"
 import type { SingBoxConfig } from "@/typings/singBoxConfig.ts"
+import { formatTime } from "@/utils/utils"
 
 defineOptions({
   name: "PuppetHome",
@@ -112,7 +113,7 @@ const uploadConf = async () => {
     const { valid, errors } = validateSingBoxConfig(data.content)
     if (valid) {
       const content = await replaceRouterConfig(data.content as SingBoxConfig)
-      const result = await conf.addTunnel(name, content, true)
+      const result = await conf.addTunnel(name, content, "local", "", true)
       if (!result.success) {
         toast.error(result.message ?? "添加失败", 3000)
         return
@@ -186,7 +187,7 @@ const onConnect = async (name: string) => {
 const openRemoteModal = () => {
   isMenuOpen.value = false // 先关掉菜单
 
-  // 2. 等待一个小的时间片，让 DOM 和动画有缓冲空间
+  // 等待一个小的时间片
   setTimeout(() => {
     isRemoteModalOpen.value = true
   }, 100)
@@ -219,27 +220,61 @@ const handleEsc = (e: KeyboardEvent) => {
       <div
         v-for="item in index"
         :key="item.name"
-        class="group relative bg-dark-2 p-5 flex items-center justify-between rounded-2xl border border-white/5 hover:border-primary/30 hover:bg-dark-3 transition-all duration-300 cursor-pointer shadow-sm active:scale-[0.98]"
+        class="group relative bg-dark-2 py-4 px-4 flex items-center justify-between rounded-2xl border border-white/5 hover:border-primary/40 hover:bg-primary/5 transition-all duration-300 cursor-pointer shadow-sm active:scale-[0.98]"
         @click="handleTunnelClick(item.name)"
       >
-        <!-- 运行状态指示器 (仅选中时显示) -->
+        <!-- 运行状态指示器 -->
         <div
           v-if="item.name === enabledName"
           class="absolute left-0 top-1/4 bottom-1/4 w-1 bg-primary rounded-r-full shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]"
         ></div>
 
-        <div class="flex flex-col gap-1 pl-2">
-          <span
-            class="text-base font-semibold tracking-tight text-slate-100 group-hover:text-primary transition-colors"
+        <div class="flex flex-col gap-2 pl-2">
+          <div class="flex items-center gap-2">
+            <span
+              class="text-base font-semibold tracking-tight text-slate-100 group-hover:text-primary transition-colors"
+            >
+              {{ item.name }}
+            </span>
+            <span
+              :class="[
+                'text-[8px] px-1.5 py-0.5 rounded-md font-bold  tracking-tighter transition-all',
+                item.type === 'remote'
+                  ? 'text-blue-400 bg-blue-500/10  border-blue-500/20'
+                  : 'text-slate-400 bg-slate-500/10  border-slate-500/20',
+              ]"
+            >
+              {{ item.type === "local" ? "本地" : "远程" }}
+            </span>
+          </div>
+
+          <!-- 协议列表 + 更新时间 -->
+          <div
+            class="flex items-center gap-2 text-[10px] font-mono tracking-wider"
           >
-            {{ item.name }}
-          </span>
-          <!-- 辅助信息：显示配置预览，增加专业感 -->
-          <span
-            class="text-[10px] text-slate-500 font-mono uppercase tracking-wider"
-          >
-            SingBox • Client Mode
-          </span>
+            <!-- 协议部分 -->
+            <div class="flex items-center gap-1.5">
+              <span
+                v-for="p in Array.isArray(item.protocol)
+                  ? item.protocol
+                  : [item.protocol]"
+                :key="p"
+                class="text-slate-700 bg-primary/5 rounded-sm border border-primary/10"
+              >
+                {{ p.toUpperCase() }}
+              </span>
+            </div>
+
+            <span class="text-slate-700">·</span>
+
+            <!-- 更新时间 -->
+            <div class="flex items-center gap-1 text-slate-500">
+              <span class="opacity-50">更新时间:</span>
+              <span>{{
+                item.lastTimestamp ? formatTime(item.lastTimestamp) : "未知"
+              }}</span>
+            </div>
+          </div>
         </div>
 
         <div class="flex items-center gap-4" @click.stop>
@@ -266,7 +301,6 @@ const handleEsc = (e: KeyboardEvent) => {
       v-else
       class="flex flex-col items-center justify-center py-20 px-6 text-center"
     >
-      <!-- 图标装饰：使用大圆角矩形容器 -->
       <div
         class="w-20 h-20 bg-dark-2 rounded-[24px] flex items-center justify-center mb-6 border border-white/5 shadow-inner"
       >

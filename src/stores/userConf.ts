@@ -12,7 +12,11 @@ import {
   writeTextFileToHome,
 } from "@/utils/rustUtils"
 import type { ActionResponse } from "@/typings/api"
-import type { SingBoxConfig, TunnelIndexItem } from "@/typings/singBoxConfig.ts"
+import type {
+  ResourceType,
+  SingBoxConfig,
+  TunnelIndexItem,
+} from "@/typings/singBoxConfig.ts"
 import JSON5 from "json5"
 import { getEnabledProtocols } from "@/utils/configParser.ts"
 
@@ -22,6 +26,10 @@ export const useConfStore = defineStore("conf", () => {
 
   const isInitialized = ref(false)
   const initPromise = ref<Promise<void> | null>(null)
+
+  const getIndexInfoByName = (name: string): TunnelIndexItem | undefined => {
+    return index.value.find((item) => item.name === name)
+  }
 
   const initConfig = async () => {
     // 1. 如果已经初始化完成，直接返回
@@ -95,6 +103,8 @@ export const useConfStore = defineStore("conf", () => {
   const saveTunnel = async (
     name: string,
     config: SingBoxConfig,
+    resourceType: ResourceType,
+    url?: string,
     isSafe: boolean = false,
   ) => {
     if (!isSafe) {
@@ -105,14 +115,40 @@ export const useConfStore = defineStore("conf", () => {
     const filePath = `${CONF_DIR}/${fileName}`
     const contents = JSON.stringify(config, null, 2)
     await writeTextFileToHome(filePath, contents)
+    const now = Math.floor(Date.now() / 1000)
+    const protocols = getEnabledProtocols(config)
+    const existingIndex = index.value.findIndex((i) => i.name === name)
 
-    const existing = index.value.find((i) => i.name === name)
-    if (!existing) {
-      index.value.push({
-        name: name,
-        path: filePath,
-        type: getEnabledProtocols(config),
-      })
+    if (existingIndex === -1) {
+      if (resourceType === "remote") {
+        if (!url) throw new Error("远程配置必须提供订阅链接 (URL)")
+        index.value.push({
+          type: "remote",
+          name,
+          path: filePath,
+          protocol: protocols,
+          url: url, // 必填
+          lastTimestamp: now, // 必填
+        })
+      } else {
+        // 3. 本地配置
+        index.value.push({
+          type: "local",
+          name,
+          path: filePath,
+          protocol: protocols,
+          lastTimestamp: now, // BaseTunnelItem 要求的必填项
+        })
+      }
+    } else {
+      // 4. 更新现有索引项的内容（保留其原本的 type 等属性）
+      const item = index.value[existingIndex]!
+      index.value[existingIndex] = {
+        ...item,
+        protocol: protocols,
+        lastTimestamp: now,
+        ...(item.type === "remote" && url ? { url } : {}),
+      } as TunnelIndexItem
     }
 
     await saveIndex()
@@ -150,6 +186,8 @@ export const useConfStore = defineStore("conf", () => {
   const addTunnel = async (
     name: string,
     config: SingBoxConfig,
+    resourceType: ResourceType,
+    url?: string,
     isSafe: boolean = false,
   ): Promise<ActionResponse> => {
     const existing = index.value.find((i) => i.name === name)
@@ -161,7 +199,7 @@ export const useConfStore = defineStore("conf", () => {
     }
 
     try {
-      await saveTunnel(name, config, isSafe)
+      await saveTunnel(name, config, resourceType, url, isSafe)
       return { success: true }
     } catch (e) {
       return {
@@ -174,10 +212,12 @@ export const useConfStore = defineStore("conf", () => {
   const updateTunnel = async (
     name: string,
     config: SingBoxConfig,
+    resourceType: ResourceType,
+    url?: string,
   ): Promise<ActionResponse> => {
     try {
       await deleteTunnel(name)
-      await saveTunnel(name, config)
+      await saveTunnel(name, config, resourceType, url)
       return { success: true }
     } catch (e) {
       return {
@@ -193,6 +233,7 @@ export const useConfStore = defineStore("conf", () => {
     isInitialized,
     initPromise,
     initConfig,
+    getIndexInfoByName,
     addTunnel,
     loadTunnel,
     updateTunnel,

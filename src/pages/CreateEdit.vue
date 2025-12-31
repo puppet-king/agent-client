@@ -23,8 +23,7 @@ const confStore = useConfStore()
 const isEdit = computed(() => !!route.params.name)
 const configName = ref("") // 对应文件名
 const showPassword = ref(false) // 控制是否显示明文
-
-const path = await join(await homeDir(), CACHE_DB_PATH)
+const path = ref("")
 
 // 初始化一个符合 TunnelConfig 结构的空表单
 const form = reactive<SingBoxConfig>({
@@ -138,7 +137,7 @@ const form = reactive<SingBoxConfig>({
   experimental: {
     cache_file: {
       enabled: true,
-      path: path,
+      path: "",
       store_rdrc: true,
     },
     clash_api: {
@@ -148,6 +147,12 @@ const form = reactive<SingBoxConfig>({
 })
 
 onMounted(async () => {
+  if (form.experimental) {
+    form.experimental.cache_file.path = await join(
+      await homeDir(),
+      CACHE_DB_PATH,
+    )
+  }
   if (isEdit.value) {
     const nameParam = String(route.params.name || "")
     configName.value = nameParam

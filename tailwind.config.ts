@@ -1,10 +1,7 @@
-import type { Config } from 'tailwindcss'
+import type { Config } from "tailwindcss"
 
 export default <Config>{
-  content: [
-    './index.html',
-    './src/**/*.{html,js,ts,jsx,tsx,vue}'
-  ],
+  content: ["./index.html", "./src/**/*.{html,js,ts,jsx,tsx,vue}"],
   theme: {
     extend: {},
   },
@@ -20,4 +17,3 @@ export default <Config>{
     // }),
   ],
 }
-
