@@ -7,7 +7,7 @@ import NavBar from "@/components/NavBar.vue"
 import ButtonWrapper from "@/components/ButtonWrapper.vue"
 import UIDialog from "@/components/UIDialog.vue"
 import { toast } from "@/composables/useToast"
-import type { SingBoxConfig, TunnelIndexItem } from "@/typings/singBoxConfig.ts"
+import type { SingBoxConfig } from "@/typings/singBoxConfig.ts"
 import ConfigRawView from "@/components/ConfigRawView.vue"
 import ConfigInfoCard from "@/components/ConfigInfoCard.vue"
 import ConfigInfoCardByRemote from "@/components/ConfigInfoCardByRemote.vue" // 如果使用组件

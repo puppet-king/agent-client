@@ -23,7 +23,13 @@ const confStore = useConfStore()
 const isEdit = computed(() => !!route.params.name)
 const configName = ref("") // 对应文件名
 const showPassword = ref(false) // 控制是否显示明文
-const path = ref("")
+const indexConf = computed(() => {
+  if (isEdit.value) {
+    return confStore.index.find((item) => item.name === configName.value)
+  }
+
+  return {}
+})
 
 // 初始化一个符合 TunnelConfig 结构的空表单
 const form = reactive<SingBoxConfig>({
@@ -192,8 +198,8 @@ const handleSave = async () => {
 
   try {
     const result = isEdit.value
-      ? await confStore.updateTunnel(configName.value, { ...form })
-      : await confStore.addTunnel(configName.value, { ...form })
+      ? await confStore.updateTunnel(configName.value, { ...form }, "local")
+      : await confStore.addTunnel(configName.value, { ...form }, "local")
     if (result.success) {
       if (isEdit.value) {
         router.back()
