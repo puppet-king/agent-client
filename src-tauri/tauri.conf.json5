@@ -32,7 +32,7 @@
     "active": true,
     "targets": "all",
     // https://v2.tauri.app/plugin/updater/ 启用此设置会true指示 Tauri 的应用打包器创建更新程序工件
-    "createUpdaterArtifacts": false,
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -65,9 +65,9 @@
         // "passive"会弹出一个带有进度条的小窗口
         "installMode": "passive"
       },
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE2MjY2RjcxMUNFNjFBMzQKUldRMEd1WWNjVzhtRm1FWjIxZkk4M1lzS1pqSE1KZWFGWks5ek1UR2RyUTJ0NjB3YjFNLzNKTEEK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDI3NUYwQjdGMTBDQzM4REQKUldUZE9Nd1Fmd3RmSnh4RXprMGYwSFYzQ1hScnk0UnJaSVdMdzFONTNvTzZCMVZPWEZLT0wveEQK",
       "endpoints": [
-        "https://github.com/user/repo/releases/latest/download/latest.json"
+        "https://github.com/puppet-king/agent-client/releases/latest/download/latest.json"
       ]
     }
   }
