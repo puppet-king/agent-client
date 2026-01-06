@@ -1,9 +1,9 @@
 name: "Tauri build & release"
 
 on:
-  push:
-    branches:
-      - master # 当向 master/main 分支推送代码时触发
+  #push:
+    #branches:
+      #- master # 当向 master/main 分支推送代码时触发
   workflow_dispatch: # 允许手动从 Actions 页面触发
 
 jobs:
