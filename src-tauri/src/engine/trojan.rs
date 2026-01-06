@@ -1,3 +1,4 @@
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::sync::Mutex;
@@ -5,8 +6,6 @@ use sysproxy::Sysproxy;
 use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_shell::process::{CommandChild, CommandEvent};
 use tauri_plugin_shell::ShellExt;
-use regex::Regex;
-
 
 // 修改 TrojanState 结构体，增加一个 Option<String> 类型的 name 字段
 pub struct TrojanState {
@@ -26,8 +25,6 @@ pub struct TrojanStatus {
 struct TrojanPortConfig {
     local_port: u16,
 }
-
-
 
 // 内部工具函数 内部共享的停止逻辑
 pub fn stop_trojan_internal(state: &TrojanState) -> Result<(), String> {
@@ -107,7 +104,7 @@ pub async fn run_trojan(
     let (mut rx, child) = shell
         .sidecar("sing-box")
         .map_err(|e| format!("Sidecar 错误: {}", e))?
-        .args(["run", "-c", &config_path,  "--disable-color"])
+        .args(["run", "-c", &config_path, "--disable-color"])
         .spawn()
         .map_err(|e| format!("Spawn 错误: {}", e))?;
 
@@ -157,26 +154,26 @@ pub async fn run_trojan(
                     let trimmed_line = raw_line.trim();
                     log::info!("{}", trimmed_line);
 
-
                     if trimmed_line.contains("FATAL") {
                         // 专门检查是否是端口占用 (WSAEADDRINUSE)
                         if trimmed_line.contains("bind: Only one usage of each socket address") {
                             // 发送中文提示
-                           let port = port_regex
-                                           .captures(trimmed_line)
-                                           .and_then(|cap| cap.get(1))
-                                           .map(|m| m.as_str())
-                                           .unwrap_or("未知"); // 如果提取失败，显示未知
+                            let port = port_regex
+                                .captures(trimmed_line)
+                                .and_then(|cap| cap.get(1))
+                                .map(|m| m.as_str())
+                                .unwrap_or("未知"); // 如果提取失败，显示未知
 
-                           let error_msg = format!(
+                            let error_msg = format!(
                                "[FATAL] 启动失败: {} 端口已被占用，请检查是否有其他代理程序正在运行",
                                port
                            );
 
-                           let _ = app_handle_clone.emit("trojan-log", error_msg);
+                            let _ = app_handle_clone.emit("trojan-log", error_msg);
                         } else {
                             // 其他 FATAL 错误原样发送
-                            let _ = app_handle_clone.emit("trojan-log", format!("[FATAL] {}", trimmed_line));
+                            let _ = app_handle_clone
+                                .emit("trojan-log", format!("[FATAL] {}", trimmed_line));
                         }
                     }
                 }
@@ -184,7 +181,6 @@ pub async fn run_trojan(
                 CommandEvent::Terminated(payload) => {
                     // 1. 打印详细日志：包含进程的退出原因（如果是 Ok 则正常退出，否则包含退出码）
                     log::warn!("[Trojan] 进程事件: Terminated, 退出信息: {:?}", payload);
-
 
                     // 2. 尝试获取锁，并在日志中打印清空前的状态
                     let mut lock = state_inner.child.lock().unwrap();

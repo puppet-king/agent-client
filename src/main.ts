@@ -9,6 +9,7 @@ import { forwardConsole } from "@/utils/utils"
 import * as z from "zod"
 import { zhCN } from "zod/locales"
 import { appDataDir } from "@tauri-apps/api/path"
+import { checkForUpdates } from "@/utils/updater.ts"
 
 const pinia = createPinia()
 z.config(zhCN())

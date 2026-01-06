@@ -1,7 +1,7 @@
 {
   "name": "puppet-trojan-client",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +11,8 @@
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
     "tauri:build-nobundle": "tauri build  --no-bundle",
-    "tauri:dev:android": "powershell -Command \"npm run tauri android dev | Where-Object { $_ -notmatch 'RustStdoutStderr' }\""
+    "tauri:dev:android": "powershell -Command \"npm run tauri android dev | Where-Object { $_ -notmatch 'RustStdoutStderr' }\"",
+    "version": "node ./scripts/sync-version.js && git add src-tauri/tauri.conf.json5"
   },
   "dependencies": {
     "@headlessui/vue": "^1.7.23",
@@ -22,6 +23,7 @@
     "@tauri-apps/plugin-http": "^2.5.4",
     "@tauri-apps/plugin-log": "^2.7.1",
     "@tauri-apps/plugin-os": "^2.3.2",
+    "@tauri-apps/plugin-process": "^2.3.1",
     "@tauri-apps/plugin-shell": "^2.3.3",
     "@tauri-apps/plugin-store": "^2.4.1",
     "@tauri-apps/plugin-stronghold": "^2.3.1",

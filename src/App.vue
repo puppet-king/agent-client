@@ -2,6 +2,13 @@
 import ToastContainer from "@/components/ToastContainer.vue"
 import DebugButton from "@/components/DebugButton.vue"
 import { config } from "@/config/config"
+import { checkForUpdates } from "@/utils/updater.ts"
+import { onMounted } from "vue"
+
+onMounted(() => {
+  console.log("APP onMounted")
+  void checkForUpdates()
+})
 </script>
 
 <template>
