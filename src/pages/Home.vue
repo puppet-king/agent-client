@@ -261,7 +261,7 @@ const handleEsc = (e: KeyboardEvent) => {
                 :key="p"
                 class="text-slate-700 bg-primary/5 rounded-sm border border-primary/10"
               >
-                {{ p.toUpperCase() }}
+                {{ p?.toUpperCase() }}
               </span>
             </div>
 

@@ -19,6 +19,7 @@ import type {
 } from "@/typings/singBoxConfig.ts"
 import JSON5 from "json5"
 import { getEnabledProtocols } from "@/utils/configParser.ts"
+import { toast } from "@/composables/useToast.ts"
 
 export const useConfStore = defineStore("conf", () => {
   const index = ref<TunnelIndexItem[]>([])
@@ -72,10 +73,14 @@ export const useConfStore = defineStore("conf", () => {
     console.log("loadIndex")
     try {
       const data = await readTextFileToHome(INDEX_FILE)
-      index.value = JSON.parse(data)
+      index.value = JSON5.parse(data)
       console.log("loadIndex index.value ", index.value)
     } catch (error) {
       console.log("loadIndex catch", error)
+      toast.error(
+        `配置文件读取失败, 请检查是否合法的 json 文件, ${INDEX_FILE}`,
+        3000,
+      )
       index.value = []
     }
   }
