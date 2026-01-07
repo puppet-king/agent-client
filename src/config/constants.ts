@@ -20,7 +20,7 @@ export const CONF_DIR = `${prefix}conf`
 
 // 用户目录
 export const USER_DIR = isDesktop() ? ".agent1215-client" : "data"
-export const CONFIG_PATH = `${prefix}config.json`
+export const SYSTEM_CONFIG_PATH = `${prefix}system.json`
 export const INDEX_FILE = `${prefix}index.json`
 export const CACHE_DB_PATH = `${prefix}cache.db`
 export const LOG_FILE = `app.log`

@@ -66,3 +66,8 @@ export interface TrojanStatus {
   name: string | null
   proxy_status: boolean
 }
+
+export interface SystemConfig {
+  autoUpdate: boolean
+  autoStart: boolean
+}

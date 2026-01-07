@@ -1,37 +1,81 @@
 <script setup lang="ts">
 import NavBar from "@/components/NavBar.vue"
-import { ArrowRight } from "lucide-vue-next"
+import { ArrowRight, Loader2 } from "lucide-vue-next"
 import { onMounted, ref } from "vue"
 import UISwitch from "@/components/UISwitch.vue"
-import { enable, isEnabled, disable } from "@tauri-apps/plugin-autostart"
 import logoUrl from "@/assets/logo.png"
 import { getVersion } from "@tauri-apps/api/app"
 import { isDesktop } from "@/utils/rustUtils.ts"
+import { checkForUpdates } from "@/utils/updater.ts"
+import { toast } from "@/composables/useToast.ts"
+import { useSystemStore } from "@/stores/system.ts"
+import { storeToRefs } from "pinia"
 
 defineOptions({
   name: "ClientSettings",
 })
 
-const enabled = ref(true)
+const system = useSystemStore()
+const { autoStart, autoUpdate } = storeToRefs(system)
+
 const version = ref("")
 const platformName = import.meta.env.VITE_BUILD_PLATFORM
 const desktop = isDesktop()
+const loading = ref(false)
+const isAutoUpdateLock = ref(false)
+const isAutoStartLock = ref(false)
 
 onMounted(async () => {
-  if (desktop) {
-    enabled.value = await isEnabled()
-  }
-
   version.value = await getVersion()
   console.debug("version", version.value)
 })
 
-const onAutoStartEnabled = async () => {
-  enabled.value = !enabled.value
-  if (enabled.value) {
-    await enable()
-  } else {
-    await disable()
+const onAutoStartChange = async () => {
+  if (isAutoStartLock.value) {
+    return
+  }
+
+  try {
+    isAutoStartLock.value = true
+    await system.toggleAutoStart()
+  } finally {
+    isAutoStartLock.value = false
+  }
+}
+
+const onAutoUpdateChange = async () => {
+  if (isAutoUpdateLock.value) {
+    return
+  }
+
+  try {
+    isAutoUpdateLock.value = true
+    await system.toggleAutoUpdate()
+  } finally {
+    isAutoUpdateLock.value = false
+  }
+}
+
+const handleUpdate = async () => {
+  console.debug("update")
+  if (loading.value) {
+    return
+  }
+
+  try {
+    loading.value = true
+    const status = await checkForUpdates()
+    if (!status) {
+      toast.info("当前已经是最新版本")
+    }
+  } catch (error) {
+    if (error === "Could not fetch a valid release JSON from the remote") {
+      toast.error("无法获取更新版本信息，可尝试连接代理重试。", 3000)
+    } else {
+      toast.error(error as string)
+    }
+  } finally {
+    loading.value = false
   }
 }
 </script>
@@ -92,9 +136,48 @@ const onAutoStartEnabled = async () => {
 
           <UISwitch
             size="medium"
-            :checked="enabled"
-            @update:checked="onAutoStartEnabled()"
+            :checked="autoStart"
+            @update:checked="onAutoStartChange()"
           />
+        </div>
+      </div>
+      <div
+        v-if="desktop"
+        class="flex flex-col bg-dark-2 py-3 px-4 hover:bg-slate-800 cursor-pointer transition-colors border-b border-white/5"
+      >
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="font-medium text-lg text-white">自动更新</div>
+          </div>
+
+          <UISwitch
+            size="medium"
+            :checked="autoUpdate"
+            @update:checked="onAutoUpdateChange"
+          />
+        </div>
+      </div>
+
+      <div
+        class="flex flex-col bg-dark-2 py-3 px-4 hover:bg-slate-800 cursor-pointer transition-colors border-b border-white/5"
+        @click="handleUpdate"
+      >
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="font-medium text-lg text-white">检查版本&更新</div>
+            <div class="text-slate-600 text-sm pt-0.5">
+              有新版本，会自动下载并安装
+            </div>
+          </div>
+
+          <div class="flex items-center justify-center w-6 h-6">
+            <Loader2
+              v-if="loading"
+              :size="20"
+              class="text-blue-500 animate-spin"
+            />
+            <ArrowRight v-else :size="24" class="text-slate-600" />
+          </div>
         </div>
       </div>
 

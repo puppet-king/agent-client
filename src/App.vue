@@ -4,10 +4,15 @@ import DebugButton from "@/components/DebugButton.vue"
 import { config } from "@/config/config"
 import { checkForUpdates } from "@/utils/updater.ts"
 import { onMounted } from "vue"
+import { useSystemStore } from "@/stores/system.ts"
 
-onMounted(() => {
+const systemStore = useSystemStore()
+onMounted(async () => {
   console.log("APP onMounted")
-  void checkForUpdates()
+
+  if (systemStore.autoUpdate) {
+    await checkForUpdates()
+  }
 })
 </script>
 

@@ -32,8 +32,23 @@ export async function checkForUpdates() {
       await relaunch()
     } else {
       console.log("当前已是最新版本。")
+      return false
     }
   } catch (error) {
     console.error("检查更新失败:", error)
+    throw error
+  }
+}
+
+export async function checkHasNewVersion() {
+  try {
+    const update = await check({
+      // 设置超时时间（毫秒 30s）
+      timeout: 30000,
+    })
+
+    return !!update
+  } catch (error) {
+    return false
   }
 }

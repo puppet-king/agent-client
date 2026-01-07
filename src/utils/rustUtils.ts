@@ -1,4 +1,9 @@
-import { CONF_DIR, USER_DIR } from "@/config/constants"
+import {
+  CONF_DIR,
+  INDEX_FILE,
+  SYSTEM_CONFIG_PATH,
+  USER_DIR,
+} from "@/config/constants"
 import { platform } from "@tauri-apps/plugin-os"
 import {
   BaseDirectory,
@@ -10,7 +15,8 @@ import {
 import { homeDir, join } from "@tauri-apps/api/path"
 import { invoke } from "@tauri-apps/api/core"
 import { listen } from "@tauri-apps/api/event"
-import type { TrojanStatus } from "@/typings/config.ts"
+import type { SystemConfig, TrojanStatus } from "@/typings/config.ts"
+import { useSystemStore } from "@/stores/system.ts"
 
 /**
  * 仅 桌面应用
@@ -143,6 +149,10 @@ export async function initHomeDir(): Promise<void> {
       baseDir: await getBestBaseDir(),
     })
   }
+
+  // 加载系统配置
+  const systemStore = useSystemStore()
+  systemStore.loadConfig()
 
   const isConfDirExist = await exists(CONF_DIR, {
     baseDir: await getBestBaseDir(),
