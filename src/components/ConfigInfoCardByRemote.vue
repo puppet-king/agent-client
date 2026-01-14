@@ -21,18 +21,10 @@ const props = defineProps<{
 }>()
 
 const conf = useConfStore()
-const urlError = ref("")
 const isDownloading = ref(false)
 
 const handleRefresh = async () => {
-  if (
-    !props.name ||
-    !props.url ||
-    urlError.value ||
-    conf.enabledName !== props.name
-  )
-    return
-
+  if (!props.name || !props.url) return
   isDownloading.value = true
   try {
     const response = await fetch(props.url, {
@@ -149,9 +141,7 @@ const formatFullTime = (ts?: number) => {
     <!-- 确认按钮 -->
     <div class="pt-2">
       <button
-        :disabled="
-          isDownloading || !url || !name || conf.enabledName === props.name
-        "
+        :disabled="isDownloading || !url || !name"
         class="group w-full h-14 bg-primary hover:bg-primary-400 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-2xl font-bold flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-xl shadow-primary/10"
         @click="handleRefresh"
       >
@@ -162,7 +152,7 @@ const formatFullTime = (ts?: number) => {
           class="group-hover:rotate-180 transition-transform duration-700 ease-in-out"
         />
         <span class="tracking-[0.15em] text-sm uppercase">
-          {{ isDownloading ? "加载中" : "立即更新数据" }}
+          {{ isDownloading ? "加载中" : "刷新最新配置" }}
         </span>
       </button>
     </div>
