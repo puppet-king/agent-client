@@ -20,7 +20,7 @@
         "width": 422,
         "height": 750,
         "resizable": true,
-        "contentProtected": true,
+        "contentProtected": true, // 禁止截屏
       }
     ],
     "security": {
